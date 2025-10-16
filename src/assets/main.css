@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
@@ -23,7 +21,8 @@
 
 /* Smooth transitions */
 * {
-  @apply transition-colors duration-200;
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
+    border-color 0.2s ease-in-out;
 }
 
 /* Custom animations */
