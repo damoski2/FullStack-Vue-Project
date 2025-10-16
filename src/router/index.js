@@ -5,6 +5,7 @@ import Cart from "../views/Cart.vue";
 import Checkout from "../views/Checkout.vue";
 import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
+import LessonMarketplace from "../views/LessonMarketplace.vue";
 
 const routes = [
   {
@@ -36,6 +37,11 @@ const routes = [
     path: "/register",
     name: "Register",
     component: Register,
+  },
+  {
+    path: "/lessons",
+    name: "LessonMarketplace",
+    component: LessonMarketplace,
   },
 ];
 
