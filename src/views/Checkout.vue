@@ -1,6 +1,6 @@
 <template>
   <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Complete Enrollment</h1>
 
     <!-- Redirect if cart is empty -->
     <div v-if="store.cart.length === 0" class="text-center py-16">
@@ -14,7 +14,7 @@
           stroke-linecap="round"
           stroke-linejoin="round"
           stroke-width="2"
-          d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
         ></path>
       </svg>
       <h2 class="text-2xl font-semibold text-gray-700 mb-4">
@@ -22,9 +22,9 @@
       </h2>
       <router-link
         to="/"
-        class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+        class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
       >
-        Continue Shopping
+        Browse Classes
       </router-link>
     </div>
 
@@ -35,39 +35,8 @@
         <!-- Contact Information -->
         <div class="bg-white rounded-xl shadow-md p-6">
           <h2 class="text-xl font-bold text-gray-900 mb-6">
-            Contact Information
+            Parent/Guardian Information
           </h2>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Email</label
-              >
-              <input
-                v-model="form.email"
-                type="email"
-                required
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Phone</label
-              >
-              <input
-                v-model="form.phone"
-                type="tel"
-                required
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="+1 (555) 000-0000"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- Shipping Address -->
-        <div class="bg-white rounded-xl shadow-md p-6">
-          <h2 class="text-xl font-bold text-gray-900 mb-6">Shipping Address</h2>
           <div class="space-y-4">
             <div class="grid sm:grid-cols-2 gap-4">
               <div>
@@ -78,7 +47,8 @@
                   v-model="form.firstName"
                   type="text"
                   required
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="John"
                 />
               </div>
               <div>
@@ -89,20 +59,125 @@
                   v-model="form.lastName"
                   type="text"
                   required
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Doe"
                 />
               </div>
             </div>
-
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Address</label
+                >Email Address</label
+              >
+              <input
+                v-model="form.email"
+                type="email"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="you@example.com"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Phone Number</label
+              >
+              <input
+                v-model="form.phone"
+                type="tel"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="+1 (555) 000-0000"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Information -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+          <h2 class="text-xl font-bold text-gray-900 mb-6">
+            Student Information
+          </h2>
+          <div class="space-y-4">
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Student First Name</label
+                >
+                <input
+                  v-model="form.studentFirstName"
+                  type="text"
+                  required
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Student's first name"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Student Last Name</label
+                >
+                <input
+                  v-model="form.studentLastName"
+                  type="text"
+                  required
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Student's last name"
+                />
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Age</label
+                >
+                <input
+                  v-model="form.studentAge"
+                  type="number"
+                  required
+                  min="5"
+                  max="18"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="10"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Grade Level</label
+                >
+                <input
+                  v-model="form.gradeLevel"
+                  type="text"
+                  required
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="5th Grade"
+                />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Special Notes or Requirements (Optional)</label
+              >
+              <textarea
+                v-model="form.specialNotes"
+                rows="3"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Any allergies, special requirements, or additional information..."
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Address Information -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+          <h2 class="text-xl font-bold text-gray-900 mb-6">Address</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Street Address</label
               >
               <input
                 v-model="form.address"
                 type="text"
                 required
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="123 Main St"
               />
             </div>
@@ -116,7 +191,7 @@
                   v-model="form.city"
                   type="text"
                   required
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               <div>
@@ -127,7 +202,7 @@
                   v-model="form.state"
                   type="text"
                   required
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               <div>
@@ -138,7 +213,7 @@
                   v-model="form.zip"
                   type="text"
                   required
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
@@ -160,7 +235,7 @@
                 type="text"
                 required
                 maxlength="19"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="1234 5678 9012 3456"
               />
             </div>
@@ -176,7 +251,7 @@
                   required
                   placeholder="MM/YY"
                   maxlength="5"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               <div>
@@ -188,7 +263,7 @@
                   type="text"
                   required
                   maxlength="3"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="123"
                 />
               </div>
@@ -200,7 +275,9 @@
       <!-- Order Summary -->
       <div class="lg:col-span-1">
         <div class="bg-white rounded-xl shadow-md p-6 sticky top-24">
-          <h2 class="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+          <h2 class="text-xl font-bold text-gray-900 mb-6">
+            Enrollment Summary
+          </h2>
 
           <!-- Cart Items -->
           <div class="space-y-4 mb-6 max-h-64 overflow-y-auto">
@@ -214,15 +291,16 @@
               >
                 <img
                   :src="item.image"
-                  :alt="item.name"
+                  :alt="item.title"
                   class="w-full h-full object-cover"
                 />
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-gray-900 truncate">
-                  {{ item.name }}
+                  {{ item.title }}
                 </p>
-                <p class="text-sm text-gray-500">Qty: {{ item.quantity }}</p>
+                <p class="text-xs text-gray-500">{{ item.teacher }}</p>
+                <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
               </div>
               <span class="text-sm font-semibold text-gray-900"
                 >${{ (item.price * item.quantity).toFixed(2) }}</span
@@ -236,7 +314,7 @@
               <span>${{ subtotal.toFixed(2) }}</span>
             </div>
             <div class="flex justify-between text-gray-600">
-              <span>Shipping</span>
+              <span>Processing Fee</span>
               <span class="text-green-600">Free</span>
             </div>
             <div class="flex justify-between text-gray-600">
@@ -246,18 +324,22 @@
             <div class="border-t pt-3">
               <div class="flex justify-between text-lg font-bold text-gray-900">
                 <span>Total</span>
-                <span class="text-blue-600">${{ total.toFixed(2) }}</span>
+                <span class="text-indigo-600">${{ total.toFixed(2) }}</span>
               </div>
             </div>
           </div>
 
           <button
-            @click="handlePlaceOrder"
+            @click="handleCompleteEnrollment"
             :disabled="!isFormValid"
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed mb-3"
           >
-            Place Order
+            Complete Enrollment
           </button>
+
+          <p class="text-xs text-gray-500 text-center">
+            By completing this enrollment, you agree to our terms and conditions
+          </p>
         </div>
       </div>
     </div>
@@ -272,10 +354,15 @@ import store from "../store";
 const router = useRouter();
 
 const form = ref({
-  email: "",
-  phone: "",
   firstName: "",
   lastName: "",
+  email: "",
+  phone: "",
+  studentFirstName: "",
+  studentLastName: "",
+  studentAge: "",
+  gradeLevel: "",
+  specialNotes: "",
   address: "",
   city: "",
   state: "",
@@ -291,10 +378,14 @@ const total = computed(() => subtotal.value + tax.value);
 
 const isFormValid = computed(() => {
   return (
-    form.value.email &&
-    form.value.phone &&
     form.value.firstName &&
     form.value.lastName &&
+    form.value.email &&
+    form.value.phone &&
+    form.value.studentFirstName &&
+    form.value.studentLastName &&
+    form.value.studentAge &&
+    form.value.gradeLevel &&
     form.value.address &&
     form.value.city &&
     form.value.state &&
@@ -305,10 +396,16 @@ const isFormValid = computed(() => {
   );
 });
 
-const handlePlaceOrder = () => {
+const handleCompleteEnrollment = () => {
   if (isFormValid.value) {
     alert(
-      "Order placed successfully! (This is a demo - no real transaction was made)"
+      `🎉 Enrollment successful!\n\n${form.value.studentFirstName} ${
+        form.value.studentLastName
+      } has been enrolled in ${store.cart.length} class${
+        store.cart.length > 1 ? "es" : ""
+      }!\n\nA confirmation email with class details and schedule has been sent to ${
+        form.value.email
+      }.\n\n(This is a demo - no real payment was processed)`
     );
     store.clearCart();
     router.push("/");

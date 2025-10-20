@@ -1,38 +1,42 @@
-# LuxeShop - Modern E-Commerce Frontend
+# AfterSchool Hub - After-School Classes Marketplace
 
-A beautiful, fully-featured e-commerce frontend built with Vue 3, Vite, and Tailwind CSS.
+A beautiful, fully-featured after-school classes and activities marketplace frontend built with Vue 3, Vite, and Tailwind CSS. This application allows students and parents to browse, select, and enroll in various after-school programs.
 
 ## 🚀 Features
 
 ### Pages
-- **Home Page**: Beautiful product grid with category filtering
-- **Product Details**: Detailed product view with images, descriptions, and reviews
-- **Shopping Cart**: Full cart management with quantity controls
-- **Checkout**: Complete checkout flow with shipping and payment forms
-- **Authentication**: Login and registration pages with social login UI
+- **Home Page**: Beautiful class grid with category filtering and hero section
+- **Lesson Details**: Detailed class view with teacher info, schedule, and learning outcomes
+- **Enrollment Cart**: Full cart management for selected classes
+- **Checkout**: Complete enrollment flow with parent, student, and payment information
+- **Authentication**: Login and registration pages for parents and students
 
 ### Functionality
-- ✅ Product browsing and filtering by category
-- ✅ Add to cart functionality
+- ✅ Class browsing and filtering by category (Music, Math, Science, Sports, Art, Technology, Language)
+- ✅ Add to cart (enrollment) functionality
 - ✅ Cart management (add, remove, update quantities)
 - ✅ Persistent cart (saved in localStorage)
 - ✅ User authentication (login/register)
 - ✅ Responsive design (mobile, tablet, desktop)
 - ✅ Beautiful UI with Tailwind CSS
 - ✅ Smooth animations and transitions
-- ✅ Product ratings and reviews display
+- ✅ Class ratings and reviews display
+- ✅ Teacher profiles with credentials
+- ✅ Age-appropriate class recommendations
 
 ### Design Features
-- 🎨 Modern, clean interface
+- 🎨 Modern, clean interface with education-focused design
 - 📱 Fully responsive layout
-- 🌈 Beautiful gradient accents
+- 🌈 Beautiful indigo-purple gradient accents
 - ✨ Smooth transitions and hover effects
-- 🖼️ High-quality product images from Unsplash
-- 🎯 Intuitive user experience
+- 🖼️ High-quality class images from Unsplash
+- 🎯 Intuitive user experience for both parents and students
+- 👨‍🏫 Teacher avatars and credentials display
+- ⭐ Featured classes highlighting
 
 ## 🛠️ Tech Stack
 
-- **Vue 3** - Progressive JavaScript framework
+- **Vue 3** - Progressive JavaScript framework with Composition API
 - **Vite** - Next-generation frontend tooling
 - **Vue Router** - Official router for Vue.js
 - **Tailwind CSS** - Utility-first CSS framework
@@ -69,16 +73,16 @@ src/
 │   ├── Header.vue   # Main navigation header
 │   └── Footer.vue   # Site footer
 ├── views/           # Page components
-│   ├── Home.vue           # Product listing page
-│   ├── ProductDetail.vue  # Individual product page
-│   ├── Cart.vue           # Shopping cart
-│   ├── Checkout.vue       # Checkout flow
+│   ├── Home.vue           # Class listing page
+│   ├── LessonDetail.vue   # Individual class page
+│   ├── Cart.vue           # Enrollment cart
+│   ├── Checkout.vue       # Enrollment checkout
 │   ├── Login.vue          # User login
 │   └── Register.vue       # User registration
 ├── router/          # Vue Router configuration
 │   └── index.js
 ├── store/           # State management
-│   └── index.js     # Reactive store with cart & products
+│   └── index.js     # Reactive store with cart & lessons
 ├── App.vue          # Root component
 └── main.js          # Application entry point
 ```
@@ -87,59 +91,104 @@ src/
 
 ### Store Management (`src/store/index.js`)
 - Reactive state management using Vue 3's `reactive()`
-- Cart operations (add, remove, update)
-- User authentication
+- Cart operations for class enrollments (add, remove, update)
+- User authentication with role support (parent/student)
 - LocalStorage persistence
+- 12 sample after-school classes with complete details
 
 ### Router (`src/router/index.js`)
 - Client-side routing with Vue Router
 - Smooth page transitions
 - Scroll behavior management
+- Lesson detail routes with dynamic IDs
 
-### Product Data
-The application includes 8 sample products across two categories:
-- Electronics (headphones, watches, earbuds, camera)
-- Fashion (sunglasses, backpack, sneakers, watch)
+### Class Data
+The application includes 12 diverse after-school classes across 8 categories:
+- **Music**: Piano, Guitar
+- **Math & Science**: Advanced Math, Science Explorers Lab
+- **Sports**: Soccer, Tennis
+- **Art**: Creative Art & Drawing
+- **Technology**: Coding & Game Development, Robotics
+- **Language**: Spanish, Creative Writing
+- **Dance**: Ballet & Contemporary
+
+Each class includes:
+- Title, description, and learning outcomes
+- Teacher name, credentials, and avatar
+- Price per hour/session
+- Duration and schedule
+- Age group recommendations
+- Student enrollment count
+- Ratings and reviews
+- Featured status
 
 ## 🎨 Styling
 
 ### Tailwind Configuration
-- Custom color palette with blue primary colors
+- Indigo and purple primary colors for education theme
 - Responsive breakpoints
-- Custom animations
+- Custom animations and transitions
 - Optimized for production
 
 ### Features
-- Hover effects on interactive elements
-- Loading animations
-- Smooth transitions
-- Custom scrollbar styling
+- Hover effects on class cards and interactive elements
+- Fade-in animations for dynamic content
+- Smooth transitions throughout
+- Category badges and featured indicators
 
 ## 🔐 Authentication
 
 The app includes a simulated authentication system:
 - Login and registration forms
+- Parent/guardian and student roles
 - User session management
 - Protected checkout flow (demo mode)
 - Social login UI (Google, Facebook)
 
 **Note**: Authentication is simulated for demo purposes. In production, integrate with a real backend API.
 
-## 🛒 Shopping Cart
+## 🛒 Enrollment Cart
 
-- Add products from any page
-- Update quantities
+- Add classes from any page
+- Update enrollment quantities (for multiple students/sessions)
 - Remove items
-- Persistent across sessions
+- Persistent across sessions (localStorage)
 - Real-time total calculation
 - Tax calculation (10%)
+- Clear distinction between cart items with class details
+
+## 📋 Checkout Process
+
+The enrollment checkout includes comprehensive forms:
+1. **Parent/Guardian Information**: Name, email, phone
+2. **Student Information**: Name, age, grade level, special requirements
+3. **Address Information**: Full address details
+4. **Payment Information**: Card details (demo only)
+5. **Enrollment Summary**: Review all selected classes before completing
 
 ## 📱 Responsive Design
 
 The application is fully responsive with breakpoints:
-- Mobile: < 640px
-- Tablet: 640px - 1024px
-- Desktop: > 1024px
+- Mobile: < 640px (Single column, stacked layout)
+- Tablet: 640px - 1024px (2 column grid)
+- Desktop: > 1024px (3-4 column grid)
+
+## 🎓 Educational Focus
+
+### For Parents
+- Clear class descriptions and learning outcomes
+- Teacher credentials and experience
+- Age-appropriate recommendations
+- Transparent pricing structure
+- Easy enrollment process
+- Safety and security information
+
+### For Students
+- Engaging class descriptions
+- Visual learning materials
+- Variety of subjects and activities
+- Skill development opportunities
+- Small class sizes
 
 ## 🚀 Deployment
 
@@ -167,18 +216,28 @@ npm run build
 
 Potential features to add:
 - [ ] Backend API integration
-- [ ] Real payment processing
-- [ ] User profile management
-- [ ] Order history
-- [ ] Product search functionality
-- [ ] Wishlist feature
-- [ ] Product reviews and ratings
-- [ ] Email notifications
-- [ ] Admin dashboard
+- [ ] Real payment processing (Stripe, PayPal)
+- [ ] Teacher profiles and management portal
+- [ ] Class schedule calendar with availability
+- [ ] Video conferencing for virtual classes
+- [ ] Student progress tracking
+- [ ] Review and rating system
+- [ ] Email notifications for enrollments
+- [ ] Parent-teacher messaging
+- [ ] Attendance tracking
+- [ ] Certificate generation
+- [ ] Multi-language support
+- [ ] Mobile app version
+
+## 🎯 Target Audience
+
+- **Primary**: Parents and guardians seeking quality after-school programs
+- **Secondary**: Students (older ages) browsing and selecting classes
+- **Age Range**: Programs for students aged 5-17 years
 
 ## 👤 Author
 
-Created for MDX University Semester 1 Project
+Created for MDX University Semester 1 Project - Front-End Development
 
 ## 📄 License
 
@@ -186,4 +245,8 @@ This project is for educational purposes.
 
 ---
 
-**Note**: This is a frontend demo application. Product images are from Unsplash. No real transactions are processed.
+**Note**: This is a frontend demo application for a fictitious after-school classes marketplace. Class images are from Unsplash, and teacher avatars are from Pravatar. No real transactions or enrollments are processed. All data is for demonstration purposes only.
+
+## 📖 Additional Documentation
+
+For a complete feature overview, see [FEATURES.md](./FEATURES.md)

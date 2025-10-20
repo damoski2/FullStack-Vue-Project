@@ -1,11 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Home from "../views/Home.vue";
-import ProductDetail from "../views/ProductDetail.vue";
+import LessonDetail from "../views/LessonDetail.vue";
 import Cart from "../views/Cart.vue";
 import Checkout from "../views/Checkout.vue";
 import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
-import LessonMarketplace from "../views/LessonMarketplace.vue";
 
 const routes = [
   {
@@ -14,9 +13,9 @@ const routes = [
     component: Home,
   },
   {
-    path: "/product/:id",
-    name: "ProductDetail",
-    component: ProductDetail,
+    path: "/lesson/:id",
+    name: "LessonDetail",
+    component: LessonDetail,
   },
   {
     path: "/cart",
@@ -37,11 +36,6 @@ const routes = [
     path: "/register",
     name: "Register",
     component: Register,
-  },
-  {
-    path: "/lessons",
-    name: "LessonMarketplace",
-    component: LessonMarketplace,
   },
 ];
 

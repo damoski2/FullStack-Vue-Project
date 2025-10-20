@@ -1,211 +1,455 @@
-import { reactive } from 'vue'
+import { reactive } from "vue";
 
-// Sample product data
-export const products = [
+// Sample lessons data - After school classes and activities
+export const lessons = [
   {
     id: 1,
-    name: 'Premium Wireless Headphones',
-    price: 299.99,
-    category: 'Electronics',
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
-    rating: 4.5,
-    reviews: 128,
-    description: 'High-quality wireless headphones with active noise cancellation and premium sound quality.',
-    features: ['Active Noise Cancellation', '30-hour battery life', 'Premium sound quality', 'Comfortable fit'],
-    inStock: true
+    title: "Piano Lessons for Beginners",
+    category: "Music",
+    teacher: "Sarah Johnson",
+    teacherTitle: "Concert Pianist",
+    teacherAvatar: "https://i.pravatar.cc/150?img=5",
+    price: 45,
+    priceUnit: "hour",
+    rating: 4.9,
+    reviews: 127,
+    duration: "1 hour",
+    schedule: "Mon & Wed, 4:00 PM",
+    ageGroup: "8-16",
+    studentsEnrolled: 34,
+    description:
+      "Learn piano from scratch with fun, engaging lessons tailored to your pace. Perfect for beginners who want to develop strong fundamentals.",
+    image:
+      "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=500&q=80",
+    features: [
+      "Individual attention",
+      "Music theory basics",
+      "Performance skills",
+      "Practice materials included",
+    ],
+    featured: true,
+    available: true,
   },
   {
     id: 2,
-    name: 'Smart Watch Pro',
-    price: 399.99,
-    category: 'Electronics',
-    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80',
+    title: "Advanced Math & Problem Solving",
+    category: "Math",
+    teacher: "Dr. Michael Chen",
+    teacherTitle: "PhD Mathematics",
+    teacherAvatar: "https://i.pravatar.cc/150?img=12",
+    price: 55,
+    priceUnit: "hour",
     rating: 4.8,
-    reviews: 256,
-    description: 'Advanced smartwatch with health tracking, GPS, and stunning display.',
-    features: ['Health tracking', 'GPS navigation', 'Water resistant', 'Always-on display'],
-    inStock: true
+    reviews: 203,
+    duration: "1.5 hours",
+    schedule: "Tue & Thu, 5:00 PM",
+    ageGroup: "11-16",
+    studentsEnrolled: 56,
+    description:
+      "Boost your math skills with challenging problems and advanced concepts. Prepare for competitions and excel in school mathematics.",
+    image:
+      "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=500&q=80",
+    features: [
+      "Competition preparation",
+      "Advanced problem solving",
+      "Small group sessions",
+      "Weekly homework support",
+    ],
+    featured: false,
+    available: true,
   },
   {
     id: 3,
-    name: 'Designer Sunglasses',
-    price: 189.99,
-    category: 'Fashion',
-    image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&q=80',
-    rating: 4.3,
+    title: "Creative Art & Drawing",
+    category: "Art",
+    teacher: "Emma Rodriguez",
+    teacherTitle: "Professional Artist",
+    teacherAvatar: "https://i.pravatar.cc/150?img=9",
+    price: 40,
+    priceUnit: "session",
+    rating: 4.7,
     reviews: 89,
-    description: 'Stylish designer sunglasses with UV protection and premium frames.',
-    features: ['UV protection', 'Polarized lenses', 'Premium materials', 'Designer style'],
-    inStock: true
+    duration: "2 hours",
+    schedule: "Saturdays, 10:00 AM",
+    ageGroup: "5-13",
+    studentsEnrolled: 28,
+    description:
+      "Unleash your creativity with various art techniques including drawing, painting, and mixed media. All materials provided!",
+    image:
+      "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=500&q=80",
+    features: [
+      "All materials included",
+      "Various art techniques",
+      "Portfolio development",
+      "Art history exploration",
+    ],
+    featured: true,
+    available: true,
   },
   {
     id: 4,
-    name: 'Leather Backpack',
-    price: 149.99,
-    category: 'Fashion',
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&q=80',
-    rating: 4.6,
-    reviews: 173,
-    description: 'Premium leather backpack with laptop compartment and multiple pockets.',
-    features: ['Genuine leather', 'Laptop compartment', 'Multiple pockets', 'Durable construction'],
-    inStock: true
+    title: "Soccer Skills Academy",
+    category: "Sports",
+    teacher: "Coach David Martinez",
+    teacherTitle: "UEFA Licensed Coach",
+    teacherAvatar: "https://i.pravatar.cc/150?img=14",
+    price: 35,
+    priceUnit: "session",
+    rating: 4.9,
+    reviews: 156,
+    duration: "1.5 hours",
+    schedule: "Mon, Wed & Fri, 4:30 PM",
+    ageGroup: "7-14",
+    studentsEnrolled: 67,
+    description:
+      "Develop soccer skills, teamwork, and fitness in a fun and supportive environment. All skill levels welcome!",
+    image:
+      "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=500&q=80",
+    features: [
+      "Professional coaching",
+      "Team building activities",
+      "Match preparation",
+      "Fitness training",
+    ],
+    featured: false,
+    available: true,
   },
   {
     id: 5,
-    name: 'Minimalist Sneakers',
-    price: 129.99,
-    category: 'Fashion',
-    image: 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500&q=80',
-    rating: 4.7,
-    reviews: 312,
-    description: 'Comfortable minimalist sneakers perfect for everyday wear.',
-    features: ['Comfortable fit', 'Minimalist design', 'Breathable material', 'Versatile style'],
-    inStock: true
+    title: "Spanish for Kids",
+    category: "Language",
+    teacher: "Isabella Garcia",
+    teacherTitle: "Native Speaker & Educator",
+    teacherAvatar: "https://i.pravatar.cc/150?img=20",
+    price: 38,
+    priceUnit: "hour",
+    rating: 4.8,
+    reviews: 94,
+    duration: "1 hour",
+    schedule: "Tue & Thu, 4:00 PM",
+    ageGroup: "5-12",
+    studentsEnrolled: 42,
+    description:
+      "Learn Spanish through games, songs, and interactive activities. Build confidence in speaking and understanding Spanish!",
+    image:
+      "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=500&q=80",
+    features: [
+      "Interactive learning",
+      "Cultural activities",
+      "Conversational practice",
+      "Fun learning games",
+    ],
+    featured: false,
+    available: true,
   },
   {
     id: 6,
-    name: 'Wireless Earbuds',
-    price: 159.99,
-    category: 'Electronics',
-    image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&q=80',
-    rating: 4.4,
-    reviews: 441,
-    description: 'True wireless earbuds with amazing sound quality and long battery life.',
-    features: ['True wireless', 'Touch controls', '24-hour battery', 'Premium sound'],
-    inStock: true
+    title: "Science Explorers Lab",
+    category: "Science",
+    teacher: "Dr. Amanda White",
+    teacherTitle: "PhD Chemistry",
+    teacherAvatar: "https://i.pravatar.cc/150?img=16",
+    price: 50,
+    priceUnit: "session",
+    rating: 4.9,
+    reviews: 178,
+    duration: "2 hours",
+    schedule: "Fridays, 4:00 PM",
+    ageGroup: "8-14",
+    studentsEnrolled: 51,
+    description:
+      "Hands-on science experiments exploring physics, chemistry, and biology. Spark curiosity and love for science!",
+    image:
+      "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=500&q=80",
+    features: [
+      "Hands-on experiments",
+      "Safety equipment provided",
+      "Science fair preparation",
+      "Lab report writing",
+    ],
+    featured: true,
+    available: true,
   },
   {
     id: 7,
-    name: 'Professional Camera',
-    price: 1299.99,
-    category: 'Electronics',
-    image: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=500&q=80',
-    rating: 4.9,
-    reviews: 187,
-    description: 'Professional mirrorless camera with exceptional image quality.',
-    features: ['High resolution', '4K video', 'Fast autofocus', 'Weather sealed'],
-    inStock: true
+    title: "Coding & Game Development",
+    category: "Technology",
+    teacher: "Alex Thompson",
+    teacherTitle: "Software Engineer",
+    teacherAvatar: "https://i.pravatar.cc/150?img=33",
+    price: 60,
+    priceUnit: "hour",
+    rating: 5.0,
+    reviews: 142,
+    duration: "1.5 hours",
+    schedule: "Wed & Sat, 3:00 PM",
+    ageGroup: "10-17",
+    studentsEnrolled: 73,
+    description:
+      "Learn to code and create your own games using Python and Scratch. Perfect for future programmers and game designers!",
+    image:
+      "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=500&q=80",
+    features: [
+      "Python & Scratch",
+      "Game design fundamentals",
+      "Portfolio projects",
+      "Computer science concepts",
+    ],
+    featured: false,
+    available: true,
   },
   {
     id: 8,
-    name: 'Classic Wrist Watch',
-    price: 249.99,
-    category: 'Fashion',
-    image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=500&q=80',
-    rating: 4.5,
-    reviews: 93,
-    description: 'Elegant classic watch with automatic movement and sapphire crystal.',
-    features: ['Automatic movement', 'Sapphire crystal', 'Water resistant', 'Classic design'],
-    inStock: true
-  }
-]
+    title: "Ballet & Contemporary Dance",
+    category: "Dance",
+    teacher: "Sophia Anderson",
+    teacherTitle: "Professional Dancer",
+    teacherAvatar: "https://i.pravatar.cc/150?img=23",
+    price: 42,
+    priceUnit: "session",
+    rating: 4.8,
+    reviews: 116,
+    duration: "1.5 hours",
+    schedule: "Mon & Wed, 5:30 PM",
+    ageGroup: "6-14",
+    studentsEnrolled: 39,
+    description:
+      "Develop grace, strength, and expression through classical ballet and contemporary dance techniques.",
+    image:
+      "https://images.unsplash.com/photo-1508807526345-15e9b5f4eaff?w=500&q=80",
+    features: [
+      "Classical technique",
+      "Performance opportunities",
+      "Flexibility training",
+      "Recital preparation",
+    ],
+    featured: false,
+    available: true,
+  },
+  {
+    id: 9,
+    title: "Guitar Masterclass",
+    category: "Music",
+    teacher: "Jake Morrison",
+    teacherTitle: "Professional Guitarist",
+    teacherAvatar: "https://i.pravatar.cc/150?img=52",
+    price: 48,
+    priceUnit: "hour",
+    rating: 4.7,
+    reviews: 98,
+    duration: "1 hour",
+    schedule: "Tue & Thu, 6:00 PM",
+    ageGroup: "10-17",
+    studentsEnrolled: 45,
+    description:
+      "Master the guitar with lessons in rock, blues, and classical styles. Learn chords, solos, and songwriting!",
+    image:
+      "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=500&q=80",
+    features: [
+      "Multiple music styles",
+      "Songwriting basics",
+      "Music reading",
+      "Performance techniques",
+    ],
+    featured: false,
+    available: true,
+  },
+  {
+    id: 10,
+    title: "Creative Writing Workshop",
+    category: "Language",
+    teacher: "Rachel Brooks",
+    teacherTitle: "Published Author",
+    teacherAvatar: "https://i.pravatar.cc/150?img=26",
+    price: 44,
+    priceUnit: "session",
+    rating: 4.9,
+    reviews: 87,
+    duration: "2 hours",
+    schedule: "Saturdays, 2:00 PM",
+    ageGroup: "11-16",
+    studentsEnrolled: 31,
+    description:
+      "Develop storytelling skills, creative expression, and writing techniques. Perfect for aspiring young authors!",
+    image:
+      "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=500&q=80",
+    features: [
+      "Story development",
+      "Character building",
+      "Publishing guidance",
+      "Peer feedback sessions",
+    ],
+    featured: false,
+    available: true,
+  },
+  {
+    id: 11,
+    title: "Robotics & Engineering",
+    category: "Technology",
+    teacher: "Dr. Kevin Park",
+    teacherTitle: "Robotics Engineer",
+    teacherAvatar: "https://i.pravatar.cc/150?img=60",
+    price: 65,
+    priceUnit: "session",
+    rating: 5.0,
+    reviews: 134,
+    duration: "2 hours",
+    schedule: "Thursdays, 4:00 PM",
+    ageGroup: "12-17",
+    studentsEnrolled: 48,
+    description:
+      "Build and program robots! Learn engineering principles, coding, and problem-solving with hands-on projects.",
+    image:
+      "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=500&q=80",
+    features: [
+      "Robot building",
+      "Programming basics",
+      "Competition prep",
+      "Engineering concepts",
+    ],
+    featured: true,
+    available: true,
+  },
+  {
+    id: 12,
+    title: "Tennis Academy",
+    category: "Sports",
+    teacher: "Coach Maria Santos",
+    teacherTitle: "Professional Tennis Coach",
+    teacherAvatar: "https://i.pravatar.cc/150?img=47",
+    price: 52,
+    priceUnit: "hour",
+    rating: 4.8,
+    reviews: 121,
+    duration: "1 hour",
+    schedule: "Mon, Wed & Fri, 5:00 PM",
+    ageGroup: "8-16",
+    studentsEnrolled: 58,
+    description:
+      "Improve your tennis game with professional coaching. Learn technique, strategy, and sportsmanship!",
+    image:
+      "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=500&q=80",
+    features: [
+      "Professional coaching",
+      "Match strategy",
+      "Fitness conditioning",
+      "Tournament preparation",
+    ],
+    featured: false,
+    available: true,
+  },
+];
 
 // Store state
 export const store = reactive({
   cart: [],
   user: null,
   isLoggedIn: false,
-  
-  // Cart methods
-  addToCart(product, quantity = 1) {
-    const existingItem = this.cart.find(item => item.id === product.id)
-    
+
+  // Cart methods (now for lessons/classes)
+  addToCart(lesson, quantity = 1) {
+    const existingItem = this.cart.find((item) => item.id === lesson.id);
+
     if (existingItem) {
-      existingItem.quantity += quantity
+      existingItem.quantity += quantity;
     } else {
       this.cart.push({
-        ...product,
-        quantity
-      })
+        ...lesson,
+        quantity,
+      });
     }
-    
-    this.saveCart()
+
+    this.saveCart();
   },
-  
-  removeFromCart(productId) {
-    this.cart = this.cart.filter(item => item.id !== productId)
-    this.saveCart()
+
+  removeFromCart(lessonId) {
+    this.cart = this.cart.filter((item) => item.id !== lessonId);
+    this.saveCart();
   },
-  
-  updateQuantity(productId, quantity) {
-    const item = this.cart.find(item => item.id === productId)
+
+  updateQuantity(lessonId, quantity) {
+    const item = this.cart.find((item) => item.id === lessonId);
     if (item) {
-      item.quantity = quantity
+      item.quantity = quantity;
       if (item.quantity <= 0) {
-        this.removeFromCart(productId)
+        this.removeFromCart(lessonId);
       }
     }
-    this.saveCart()
+    this.saveCart();
   },
-  
+
   clearCart() {
-    this.cart = []
-    this.saveCart()
+    this.cart = [];
+    this.saveCart();
   },
-  
+
   getCartTotal() {
-    return this.cart.reduce((total, item) => total + (item.price * item.quantity), 0)
+    return this.cart.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
   },
-  
+
   getCartCount() {
-    return this.cart.reduce((count, item) => count + item.quantity, 0)
+    return this.cart.reduce((count, item) => count + item.quantity, 0);
   },
-  
+
   // User methods
   login(email, password) {
     // Simulate login
     this.user = {
-      name: email.split('@')[0],
-      email: email
-    }
-    this.isLoggedIn = true
-    localStorage.setItem('user', JSON.stringify(this.user))
+      name: email.split("@")[0],
+      email: email,
+      role: "parent", // or 'student'
+    };
+    this.isLoggedIn = true;
+    localStorage.setItem("user", JSON.stringify(this.user));
   },
-  
+
   logout() {
-    this.user = null
-    this.isLoggedIn = false
-    localStorage.removeItem('user')
+    this.user = null;
+    this.isLoggedIn = false;
+    localStorage.removeItem("user");
   },
-  
-  register(name, email, password) {
+
+  register(name, email, password, role = "parent") {
     // Simulate registration
     this.user = {
       name: name,
-      email: email
-    }
-    this.isLoggedIn = true
-    localStorage.setItem('user', JSON.stringify(this.user))
+      email: email,
+      role: role,
+    };
+    this.isLoggedIn = true;
+    localStorage.setItem("user", JSON.stringify(this.user));
   },
-  
+
   // Persistence
   saveCart() {
-    localStorage.setItem('cart', JSON.stringify(this.cart))
+    localStorage.setItem("cart", JSON.stringify(this.cart));
   },
-  
+
   loadCart() {
-    const savedCart = localStorage.getItem('cart')
+    const savedCart = localStorage.getItem("cart");
     if (savedCart) {
-      this.cart = JSON.parse(savedCart)
+      this.cart = JSON.parse(savedCart);
     }
   },
-  
+
   loadUser() {
-    const savedUser = localStorage.getItem('user')
+    const savedUser = localStorage.getItem("user");
     if (savedUser) {
-      this.user = JSON.parse(savedUser)
-      this.isLoggedIn = true
+      this.user = JSON.parse(savedUser);
+      this.isLoggedIn = true;
     }
   },
-  
+
   init() {
-    this.loadCart()
-    this.loadUser()
-  }
-})
+    this.loadCart();
+    this.loadUser();
+  },
+});
 
 // Initialize store
-store.init()
+store.init();
 
-export default store
-
+export default store;
