@@ -340,6 +340,9 @@ export const lessons = [
   },
 ];
 
+
+
+
 // Store state
 export const store = reactive({
   cart: [],
