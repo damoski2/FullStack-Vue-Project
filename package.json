@@ -1,27 +1,37 @@
 {
-  "name": "sem1-project",
-  "version": "0.0.0",
+  "name": "afterschool-hub",
+  "version": "1.0.0",
+  "description": "AfterSchool Hub - Full-stack after-school classes marketplace",
   "private": true,
   "type": "module",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "vue": "^3.5.22",
-    "vue-router": "^4.6.3"
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "install:all": "npm run install:frontend && npm run install:backend",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm install --production",
+    "build": "npm run build:frontend && npm run build:backend",
+    "backend:seed": "cd backend && npm run seed",
+    "start:frontend": "cd frontend && npm run preview",
+    "start:backend": "cd backend && npm start"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.14",
-    "@vitejs/plugin-vue": "^6.0.1",
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.14",
-    "vite": "^7.1.7",
-    "vite-plugin-vue-devtools": "^8.0.2"
-  }
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "education",
+    "afterschool",
+    "classes",
+    "marketplace",
+    "vue",
+    "express"
+  ],
+  "author": "AfterSchool Hub Team",
+  "license": "MIT"
 }

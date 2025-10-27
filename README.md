@@ -1,252 +1,339 @@
-# AfterSchool Hub - After-School Classes Marketplace
+# AfterSchool Hub - Complete Full-Stack Application
 
-A beautiful, fully-featured after-school classes and activities marketplace frontend built with Vue 3, Vite, and Tailwind CSS. This application allows students and parents to browse, select, and enroll in various after-school programs.
+A comprehensive after-school classes marketplace platform built with Vue.js frontend and Node.js/Express backend.
 
-## 🚀 Features
+## 🎯 Project Overview
 
-### Pages
-- **Home Page**: Beautiful class grid with category filtering and hero section
-- **Lesson Details**: Detailed class view with teacher info, schedule, and learning outcomes
-- **Enrollment Cart**: Full cart management for selected classes
-- **Checkout**: Complete enrollment flow with parent, student, and payment information
-- **Authentication**: Login and registration pages for parents and students
+AfterSchool Hub is a full-stack web application that connects parents with quality after-school programs for their children. The platform features a modern Vue.js frontend with a robust Node.js/Express backend API.
 
-### Functionality
-- ✅ Class browsing and filtering by category (Music, Math, Science, Sports, Art, Technology, Language)
-- ✅ Add to cart (enrollment) functionality
-- ✅ Cart management (add, remove, update quantities)
-- ✅ Persistent cart (saved in localStorage)
-- ✅ User authentication (login/register)
-- ✅ Responsive design (mobile, tablet, desktop)
-- ✅ Beautiful UI with Tailwind CSS
-- ✅ Smooth animations and transitions
-- ✅ Class ratings and reviews display
-- ✅ Teacher profiles with credentials
-- ✅ Age-appropriate class recommendations
+### Key Features
+- **Frontend**: Vue.js 3 with Composition API, Tailwind CSS, Vue Router
+- **Backend**: Node.js/Express with SQLite database
+- **Authentication**: JWT-based authentication system
+- **Database**: SQLite with comprehensive schema
+- **File Upload**: Image upload support for lessons
+- **Payment Ready**: Integration-ready payment system
+- **Responsive Design**: Mobile-first responsive design
 
-### Design Features
-- 🎨 Modern, clean interface with education-focused design
-- 📱 Fully responsive layout
-- 🌈 Beautiful indigo-purple gradient accents
-- ✨ Smooth transitions and hover effects
-- 🖼️ High-quality class images from Unsplash
-- 🎯 Intuitive user experience for both parents and students
-- 👨‍🏫 Teacher avatars and credentials display
-- ⭐ Featured classes highlighting
-
-## 🛠️ Tech Stack
-
-- **Vue 3** - Progressive JavaScript framework with Composition API
-- **Vite** - Next-generation frontend tooling
-- **Vue Router** - Official router for Vue.js
-- **Tailwind CSS** - Utility-first CSS framework
-- **LocalStorage** - For cart and user persistence
-
-## 📦 Installation
-
-1. Install dependencies:
-```bash
-npm install
-```
-
-2. Run the development server:
-```bash
-npm run dev
-```
-
-3. Build for production:
-```bash
-npm run build
-```
-
-4. Preview production build:
-```bash
-npm run preview
-```
-
-## 🏗️ Project Structure
+## 📁 Project Structure
 
 ```
-src/
-├── assets/          # Styles and static assets
-├── components/      # Reusable components
-│   ├── Header.vue   # Main navigation header
-│   └── Footer.vue   # Site footer
-├── views/           # Page components
-│   ├── Home.vue           # Class listing page
-│   ├── LessonDetail.vue   # Individual class page
-│   ├── Cart.vue           # Enrollment cart
-│   ├── Checkout.vue       # Enrollment checkout
-│   ├── Login.vue          # User login
-│   └── Register.vue       # User registration
-├── router/          # Vue Router configuration
-│   └── index.js
-├── store/           # State management
-│   └── index.js     # Reactive store with cart & lessons
-├── App.vue          # Root component
-└── main.js          # Application entry point
+sem1-project/
+├── src/                          # Vue.js frontend
+│   ├── components/               # Vue components
+│   ├── views/                    # Page components
+│   ├── router/                   # Vue Router configuration
+│   ├── store/                    # State management
+│   └── assets/                   # Static assets
+├── server/                       # Node.js backend
+│   ├── config/                   # Database configuration
+│   ├── middleware/                # Express middleware
+│   ├── routes/                   # API routes
+│   ├── scripts/                  # Database seeding
+│   └── uploads/                  # File uploads
+├── public/                       # Static files
+├── package.json                  # Frontend dependencies
+├── server/package.json           # Backend dependencies
+└── start-backend.sh              # Backend startup script
 ```
 
-## 🎯 Key Components
+## 🚀 Quick Start
 
-### Store Management (`src/store/index.js`)
-- Reactive state management using Vue 3's `reactive()`
-- Cart operations for class enrollments (add, remove, update)
-- User authentication with role support (parent/student)
-- LocalStorage persistence
-- 12 sample after-school classes with complete details
+### Prerequisites
+- Node.js v20.19.0 or higher
+- npm or yarn
 
-### Router (`src/router/index.js`)
-- Client-side routing with Vue Router
-- Smooth page transitions
-- Scroll behavior management
-- Lesson detail routes with dynamic IDs
+### Installation
 
-### Class Data
-The application includes 12 diverse after-school classes across 8 categories:
-- **Music**: Piano, Guitar
-- **Math & Science**: Advanced Math, Science Explorers Lab
-- **Sports**: Soccer, Tennis
-- **Art**: Creative Art & Drawing
-- **Technology**: Coding & Game Development, Robotics
-- **Language**: Spanish, Creative Writing
-- **Dance**: Ballet & Contemporary
+1. **Clone and navigate to the project:**
+   ```bash
+   cd sem1-project
+   ```
 
-Each class includes:
-- Title, description, and learning outcomes
-- Teacher name, credentials, and avatar
-- Price per hour/session
-- Duration and schedule
-- Age group recommendations
-- Student enrollment count
-- Ratings and reviews
-- Featured status
+2. **Install frontend dependencies:**
+   ```bash
+   npm install
+   ```
 
-## 🎨 Styling
+3. **Install backend dependencies:**
+   ```bash
+   npm run backend:install
+   ```
 
-### Tailwind Configuration
-- Indigo and purple primary colors for education theme
-- Responsive breakpoints
-- Custom animations and transitions
-- Optimized for production
+4. **Set up backend environment:**
+   ```bash
+   cd server
+   cp .env.example .env
+   # Edit .env with your configuration
+   cd ..
+   ```
 
-### Features
-- Hover effects on class cards and interactive elements
-- Fade-in animations for dynamic content
-- Smooth transitions throughout
-- Category badges and featured indicators
+5. **Seed the database:**
+   ```bash
+   npm run backend:seed
+   ```
+
+6. **Start both frontend and backend:**
+   ```bash
+   npm run full:dev
+   ```
+
+   Or start them separately:
+   ```bash
+   # Terminal 1 - Frontend
+   npm run dev
+   
+   # Terminal 2 - Backend
+   npm run backend:dev
+   ```
+
+### Access the Application
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:3000
+- **API Health Check**: http://localhost:3000/health
+
+## 🔧 Available Scripts
+
+### Frontend Scripts
+- `npm run dev` - Start frontend development server
+- `npm run build` - Build frontend for production
+- `npm run preview` - Preview production build
+
+### Backend Scripts
+- `npm run backend:install` - Install backend dependencies
+- `npm run backend:dev` - Start backend development server
+- `npm run backend:start` - Start backend production server
+- `npm run backend:seed` - Seed database with sample data
+- `npm run backend:setup` - Run backend setup script
+
+### Full-Stack Scripts
+- `npm run full:dev` - Start both frontend and backend
+- `npm run full:build` - Build both frontend and backend
+
+## 🎨 Frontend Features
+
+### Pages & Components
+- **Home Page**: Browse lessons with category filtering
+- **Lesson Detail**: Detailed lesson information and enrollment
+- **Cart**: Manage selected lessons
+- **Checkout**: Complete enrollment process
+- **Authentication**: Login and registration
+- **Responsive Design**: Mobile-first approach
+
+### State Management
+- Vue 3 Composition API with reactive store
+- Cart management with localStorage persistence
+- User authentication state
+- Lesson data management
+
+### Styling
+- Tailwind CSS for utility-first styling
+- Responsive design with mobile breakpoints
+- Modern UI components with hover effects
+- Consistent color scheme and typography
+
+## 🔌 Backend API Features
+
+### Authentication System
+- JWT-based authentication
+- Password hashing with bcrypt
+- Role-based access control
+- User profile management
+
+### Database Schema
+- **Users**: User accounts and profiles
+- **Teachers**: Instructor information
+- **Categories**: Lesson categories
+- **Lessons**: Course information
+- **Cart Items**: Shopping cart management
+- **Enrollments**: Student enrollments
+- **Reviews**: User reviews and ratings
+
+### API Endpoints
+- **Authentication**: `/api/auth/*`
+- **Lessons**: `/api/lessons/*`
+- **Cart**: `/api/cart/*`
+- **Enrollments**: `/api/enrollments/*`
+- **Users**: `/api/users/*`
+
+### Security Features
+- CORS configuration
+- Rate limiting
+- Security headers with Helmet
+- Input validation
+- File upload security
+
+## 🗄️ Database
+
+### Sample Data
+The database comes pre-seeded with:
+- 8 categories (Music, Math, Science, Sports, Art, Technology, Language, Dance)
+- 12 teachers with detailed profiles
+- 12 sample lessons across all categories
+- 4 test users (including admin account)
+
+### Test Accounts
+- **Parent**: john@example.com / password123
+- **Admin**: admin@afterschoolhub.com / admin123
 
 ## 🔐 Authentication
 
-The app includes a simulated authentication system:
-- Login and registration forms
-- Parent/guardian and student roles
-- User session management
-- Protected checkout flow (demo mode)
-- Social login UI (Google, Facebook)
+### User Roles
+- **parent** - Browse and enroll children
+- **student** - Same as parent (for older students)
+- **teacher** - Create and manage lessons
+- **admin** - Full system access
 
-**Note**: Authentication is simulated for demo purposes. In production, integrate with a real backend API.
-
-## 🛒 Enrollment Cart
-
-- Add classes from any page
-- Update enrollment quantities (for multiple students/sessions)
-- Remove items
-- Persistent across sessions (localStorage)
-- Real-time total calculation
-- Tax calculation (10%)
-- Clear distinction between cart items with class details
-
-## 📋 Checkout Process
-
-The enrollment checkout includes comprehensive forms:
-1. **Parent/Guardian Information**: Name, email, phone
-2. **Student Information**: Name, age, grade level, special requirements
-3. **Address Information**: Full address details
-4. **Payment Information**: Card details (demo only)
-5. **Enrollment Summary**: Review all selected classes before completing
+### JWT Tokens
+- Secure token-based authentication
+- Configurable expiration time
+- Automatic token validation
 
 ## 📱 Responsive Design
 
-The application is fully responsive with breakpoints:
-- Mobile: < 640px (Single column, stacked layout)
-- Tablet: 640px - 1024px (2 column grid)
-- Desktop: > 1024px (3-4 column grid)
+### Breakpoints
+- **Mobile**: < 640px (Single column)
+- **Tablet**: 640px - 1024px (2 columns)
+- **Desktop**: > 1024px (3-4 columns)
 
-## 🎓 Educational Focus
+### Features
+- Mobile-first design approach
+- Touch-friendly interface
+- Optimized images and loading
+- Smooth animations and transitions
 
-### For Parents
-- Clear class descriptions and learning outcomes
-- Teacher credentials and experience
-- Age-appropriate recommendations
-- Transparent pricing structure
-- Easy enrollment process
-- Safety and security information
+## 🛠️ Development
 
-### For Students
-- Engaging class descriptions
-- Visual learning materials
-- Variety of subjects and activities
-- Skill development opportunities
-- Small class sizes
-
-## 🚀 Deployment
-
-The app can be deployed to any static hosting service:
-
-### Vercel
+### Frontend Development
 ```bash
-npm run build
-vercel --prod
+npm run dev
+```
+- Hot module replacement
+- Vue DevTools integration
+- Tailwind CSS compilation
+- TypeScript support ready
+
+### Backend Development
+```bash
+npm run backend:dev
+```
+- Nodemon for auto-restart
+- SQLite database
+- File upload handling
+- Comprehensive logging
+
+### Database Management
+```bash
+npm run backend:seed
+```
+- Reset and seed database
+- Sample data generation
+- Test user creation
+
+## 🚀 Production Deployment
+
+### Frontend Deployment
+1. Build the frontend: `npm run build`
+2. Deploy `dist/` folder to your hosting service
+3. Configure environment variables
+
+### Backend Deployment
+1. Set production environment variables
+2. Use production database (PostgreSQL/MySQL)
+3. Configure proper JWT secrets
+4. Set up file storage (AWS S3, etc.)
+5. Deploy to cloud platform (Heroku, AWS, etc.)
+
+### Environment Variables
+```env
+# Backend (.env)
+PORT=3000
+NODE_ENV=production
+FRONTEND_URL=https://yourdomain.com
+JWT_SECRET=your-production-secret
+JWT_EXPIRE=7d
+DB_PATH=./database/afterschool_hub.db
 ```
 
-### Netlify
+## 📊 API Documentation
+
+### Authentication Flow
+1. Register/Login to get JWT token
+2. Include token in Authorization header
+3. Access protected endpoints
+
+### Example API Calls
 ```bash
-npm run build
-netlify deploy --prod --dir=dist
+# Register user
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"John Doe","email":"john@example.com","password":"password123"}'
+
+# Get lessons
+curl http://localhost:3000/api/lessons
+
+# Add to cart (requires auth)
+curl -X POST http://localhost:3000/api/cart/add \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"lesson_id":1,"quantity":1}'
 ```
 
-### GitHub Pages
+## 🧪 Testing
+
+### Manual Testing
+1. Use test accounts provided
+2. Test all user flows
+3. Verify responsive design
+4. Test API endpoints
+
+### Health Checks
+- Frontend: http://localhost:5173
+- Backend: http://localhost:3000/health
+
+## 🔄 Database Management
+
+### Backup Database
 ```bash
-npm run build
-# Push dist folder to gh-pages branch
+cp server/database/afterschool_hub.db backup/
 ```
 
-## 📝 Future Enhancements
+### Reset Database
+```bash
+npm run backend:seed
+```
 
-Potential features to add:
-- [ ] Backend API integration
-- [ ] Real payment processing (Stripe, PayPal)
-- [ ] Teacher profiles and management portal
-- [ ] Class schedule calendar with availability
-- [ ] Video conferencing for virtual classes
-- [ ] Student progress tracking
-- [ ] Review and rating system
-- [ ] Email notifications for enrollments
-- [ ] Parent-teacher messaging
-- [ ] Attendance tracking
-- [ ] Certificate generation
-- [ ] Multi-language support
-- [ ] Mobile app version
+### Add New Data
+- Modify `server/scripts/seedDatabase.js`
+- Run seeding script
+- Update API endpoints if needed
 
-## 🎯 Target Audience
+## 🤝 Contributing
 
-- **Primary**: Parents and guardians seeking quality after-school programs
-- **Secondary**: Students (older ages) browsing and selecting classes
-- **Age Range**: Programs for students aged 5-17 years
-
-## 👤 Author
-
-Created for MDX University Semester 1 Project - Front-End Development
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
 ## 📄 License
 
-This project is for educational purposes.
+This project is licensed under the MIT License.
+
+## 🆘 Support
+
+### Common Issues
+- **Port conflicts**: Change ports in configuration
+- **Database errors**: Run `npm run backend:seed`
+- **CORS issues**: Check FRONTEND_URL in .env
+- **File uploads**: Ensure uploads directory exists
+
+### Getting Help
+- Check the README files
+- Review API documentation
+- Check console logs for errors
+- Create an issue in the repository
 
 ---
 
-**Note**: This is a frontend demo application for a fictitious after-school classes marketplace. Class images are from Unsplash, and teacher avatars are from Pravatar. No real transactions or enrollments are processed. All data is for demonstration purposes only.
-
-## 📖 Additional Documentation
-
-For a complete feature overview, see [FEATURES.md](./FEATURES.md)
+**AfterSchool Hub** - Empowering after-school education with modern technology! 🎓✨
