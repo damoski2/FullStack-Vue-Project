@@ -16,6 +16,7 @@ import userRoutes from "./routes/users.js";
 // Import middleware
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import { initDatabase } from "./config/database.js";
+import { connectMongo } from "./config/mongo.js";
 
 // Load environment variables
 dotenv.config();
@@ -24,7 +25,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Security middleware
 app.use(helmet());
@@ -76,8 +77,12 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
-    // Initialize database
-    await initDatabase();
+    // Prefer MongoDB if configured; otherwise fall back to SQLite
+    if (process.env.MONGO_URI) {
+      await connectMongo();
+    } else {
+      await initDatabase();
+    }
 
     app.listen(PORT, () => {
       console.log(`🚀 AfterSchool Hub API server running on port ${PORT}`);
