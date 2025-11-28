@@ -1,6 +1,9 @@
 import express from "express";
 import { body, validationResult } from "express-validator";
-import { dbQuery, dbGet, dbRun } from "../config/database.js";
+import Lesson from "../models/Lesson.js";
+import Category from "../models/Category.js";
+import Teacher from "../models/Teacher.js";
+import Review from "../models/Review.js";
 import {
   authenticateToken,
   requireAdmin,
@@ -26,110 +29,116 @@ router.get("/", optionalAuth, async (req, res) => {
       ageGroup,
       page = 1,
       limit = 12,
-      sortBy = "created_at",
-      sortOrder = "DESC",
+      sortBy = "createdAt",
+      sortOrder = "desc",
     } = req.query;
 
-    let sql = `
-      SELECT 
-        l.*,
-        c.name as category_name,
-        c.icon as category_icon,
-        t.name as teacher_name,
-        t.title as teacher_title,
-        t.avatar as teacher_avatar,
-        t.rating as teacher_rating
-      FROM lessons l
-      LEFT JOIN categories c ON l.category_id = c.id
-      LEFT JOIN teachers t ON l.teacher_id = t.id
-      WHERE 1=1
-    `;
+    // Build filter object
+    const filter = {};
 
-    const params = [];
-    const conditions = [];
-
-    // Apply filters
     if (category) {
-      conditions.push("c.name = ?");
-      params.push(category);
+      const categoryDoc = await Category.findOne({ name: category });
+      if (categoryDoc) {
+        filter.category_id = categoryDoc._id;
+      } else {
+        // If category not found, return empty results
+        return res.json({
+          success: true,
+          data: {
+            lessons: [],
+            pagination: {
+              currentPage: parseInt(page),
+              totalPages: 0,
+              totalItems: 0,
+              itemsPerPage: parseInt(limit),
+              hasNextPage: false,
+              hasPrevPage: false,
+            },
+          },
+        });
+      }
     }
 
     if (featured !== undefined) {
-      conditions.push("l.featured = ?");
-      params.push(featured === "true" ? 1 : 0);
+      filter.featured = featured === "true";
     }
 
     if (available !== undefined) {
-      conditions.push("l.available = ?");
-      params.push(available === "true" ? 1 : 0);
-    }
-
-    if (search) {
-      conditions.push(
-        "(l.title LIKE ? OR l.description LIKE ? OR t.name LIKE ?)"
-      );
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      filter.available = available === "true";
     }
 
     if (minPrice) {
-      conditions.push("l.price >= ?");
-      params.push(parseFloat(minPrice));
+      filter.price = { ...filter.price, $gte: parseFloat(minPrice) };
     }
 
     if (maxPrice) {
-      conditions.push("l.price <= ?");
-      params.push(parseFloat(maxPrice));
+      filter.price = { ...filter.price, $lte: parseFloat(maxPrice) };
     }
 
     if (ageGroup) {
-      conditions.push("l.age_group LIKE ?");
-      params.push(`%${ageGroup}%`);
+      filter.age_group = { $regex: ageGroup, $options: "i" };
     }
 
-    if (conditions.length > 0) {
-      sql += " AND " + conditions.join(" AND ");
+    // Build search query
+    if (search) {
+      const teacherIds = await Teacher.find({
+        name: { $regex: search, $options: "i" },
+      }).select("_id");
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { teacher_id: { $in: teacherIds.map((t) => t._id) } },
+      ];
     }
 
-    // Add sorting
+    // Build sort object
     const validSortFields = [
-      "created_at",
+      "createdAt",
       "price",
       "rating",
       "title",
       "students_enrolled",
     ];
-    const sortField = validSortFields.includes(sortBy) ? sortBy : "created_at";
-    const order = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
-    sql += ` ORDER BY l.${sortField} ${order}`;
+    const sortField = validSortFields.includes(sortBy) ? sortBy : "createdAt";
+    const sort = {};
+    sort[sortField] = sortOrder.toLowerCase() === "asc" ? 1 : -1;
 
-    // Add pagination
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-    sql += ` LIMIT ? OFFSET ?`;
-    params.push(parseInt(limit), offset);
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const lessons = await dbQuery(sql, params);
+    // Get lessons with populated fields
+    const lessons = await Lesson.find(filter)
+      .populate("category_id", "name icon")
+      .populate("teacher_id", "name title avatar rating")
+      .sort(sort)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
 
-    // Get total count for pagination
-    let countSql = `
-      SELECT COUNT(*) as total
-      FROM lessons l
-      LEFT JOIN categories c ON l.category_id = c.id
-      LEFT JOIN teachers t ON l.teacher_id = t.id
-      WHERE 1=1
-    `;
+    // Transform lessons to match expected format
+    const transformedLessons = lessons.map((lesson) => ({
+      ...lesson,
+      id: lesson._id.toString(),
+      category_name: lesson.category_id?.name,
+      category_icon: lesson.category_id?.icon,
+      teacher_name: lesson.teacher_id?.name,
+      teacher_title: lesson.teacher_id?.title,
+      teacher_avatar: lesson.teacher_id?.avatar,
+      teacher_rating: lesson.teacher_id?.rating,
+      category_id: lesson.category_id?._id.toString(),
+      teacher_id: lesson.teacher_id?._id.toString(),
+      created_at: lesson.createdAt,
+      updated_at: lesson.updatedAt,
+    }));
 
-    if (conditions.length > 0) {
-      countSql += " AND " + conditions.join(" AND ");
-    }
-
-    const countResult = await dbGet(countSql, params.slice(0, -2)); // Remove limit and offset
-    const total = countResult.total;
+    // Get total count
+    const total = await Lesson.countDocuments(filter);
     const totalPages = Math.ceil(total / parseInt(limit));
 
     res.json({
       success: true,
       data: {
-        lessons,
+        lessons: transformedLessons,
         pagination: {
           currentPage: parseInt(page),
           totalPages,
@@ -154,17 +163,53 @@ router.get("/", optionalAuth, async (req, res) => {
 // @access  Public
 router.get("/categories", async (req, res) => {
   try {
-    const categories = await dbQuery(`
-      SELECT c.*, COUNT(l.id) as lesson_count
-      FROM categories c
-      LEFT JOIN lessons l ON c.id = l.category_id AND l.available = 1
-      GROUP BY c.id
-      ORDER BY c.name
-    `);
+    const categories = await Category.aggregate([
+      {
+        $lookup: {
+          from: "lessons",
+          let: { categoryId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$category_id", "$$categoryId"] },
+                    { $eq: ["$available", true] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "lessons",
+        },
+      },
+      {
+        $addFields: {
+          lesson_count: { $size: "$lessons" },
+        },
+      },
+      {
+        $project: {
+          lessons: 0,
+        },
+      },
+      {
+        $sort: { name: 1 },
+      },
+    ]);
+
+    const transformedCategories = categories.map((cat) => ({
+      id: cat._id.toString(),
+      name: cat.name,
+      description: cat.description,
+      icon: cat.icon,
+      lesson_count: cat.lesson_count,
+      created_at: cat.createdAt,
+    }));
 
     res.json({
       success: true,
-      data: { categories },
+      data: { categories: transformedCategories },
     });
   } catch (error) {
     console.error("Get categories error:", error);
@@ -182,28 +227,33 @@ router.get("/featured", async (req, res) => {
   try {
     const { limit = 6 } = req.query;
 
-    const lessons = await dbQuery(
-      `
-      SELECT 
-        l.*,
-        c.name as category_name,
-        c.icon as category_icon,
-        t.name as teacher_name,
-        t.title as teacher_title,
-        t.avatar as teacher_avatar
-      FROM lessons l
-      LEFT JOIN categories c ON l.category_id = c.id
-      LEFT JOIN teachers t ON l.teacher_id = t.id
-      WHERE l.featured = 1 AND l.available = 1
-      ORDER BY l.rating DESC, l.students_enrolled DESC
-      LIMIT ?
-    `,
-      [parseInt(limit)]
-    );
+    const lessons = await Lesson.find({
+      featured: true,
+      available: true,
+    })
+      .populate("category_id", "name icon")
+      .populate("teacher_id", "name title avatar")
+      .sort({ rating: -1, students_enrolled: -1 })
+      .limit(parseInt(limit))
+      .lean();
+
+    const transformedLessons = lessons.map((lesson) => ({
+      ...lesson,
+      id: lesson._id.toString(),
+      category_name: lesson.category_id?.name,
+      category_icon: lesson.category_id?.icon,
+      teacher_name: lesson.teacher_id?.name,
+      teacher_title: lesson.teacher_id?.title,
+      teacher_avatar: lesson.teacher_id?.avatar,
+      category_id: lesson.category_id?._id.toString(),
+      teacher_id: lesson.teacher_id?._id.toString(),
+      created_at: lesson.createdAt,
+      updated_at: lesson.updatedAt,
+    }));
 
     res.json({
       success: true,
-      data: { lessons },
+      data: { lessons: transformedLessons },
     });
   } catch (error) {
     console.error("Get featured lessons error:", error);
@@ -221,28 +271,10 @@ router.get("/:id", optionalAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const lesson = await dbGet(
-      `
-      SELECT 
-        l.*,
-        c.name as category_name,
-        c.icon as category_icon,
-        c.description as category_description,
-        t.name as teacher_name,
-        t.title as teacher_title,
-        t.avatar as teacher_avatar,
-        t.bio as teacher_bio,
-        t.credentials as teacher_credentials,
-        t.experience_years as teacher_experience,
-        t.rating as teacher_rating,
-        t.total_reviews as teacher_total_reviews
-      FROM lessons l
-      LEFT JOIN categories c ON l.category_id = c.id
-      LEFT JOIN teachers t ON l.teacher_id = t.id
-      WHERE l.id = ?
-    `,
-      [id]
-    );
+    const lesson = await Lesson.findById(id)
+      .populate("category_id", "name icon description")
+      .populate("teacher_id", "name title avatar bio credentials experience_years rating total_reviews")
+      .lean();
 
     if (!lesson) {
       return res.status(404).json({
@@ -251,47 +283,74 @@ router.get("/:id", optionalAuth, async (req, res) => {
       });
     }
 
+    // Transform lesson
+    const transformedLesson = {
+      ...lesson,
+      id: lesson._id.toString(),
+      category_name: lesson.category_id?.name,
+      category_icon: lesson.category_id?.icon,
+      category_description: lesson.category_id?.description,
+      teacher_name: lesson.teacher_id?.name,
+      teacher_title: lesson.teacher_id?.title,
+      teacher_avatar: lesson.teacher_id?.avatar,
+      teacher_bio: lesson.teacher_id?.bio,
+      teacher_credentials: lesson.teacher_id?.credentials,
+      teacher_experience: lesson.teacher_id?.experience_years,
+      teacher_rating: lesson.teacher_id?.rating,
+      teacher_total_reviews: lesson.teacher_id?.total_reviews,
+      category_id: lesson.category_id?._id.toString(),
+      teacher_id: lesson.teacher_id?._id.toString(),
+      created_at: lesson.createdAt,
+      updated_at: lesson.updatedAt,
+    };
+
     // Get similar lessons (same category)
-    const similarLessons = await dbQuery(
-      `
-      SELECT 
-        l.*,
-        c.name as category_name,
-        t.name as teacher_name,
-        t.title as teacher_title,
-        t.avatar as teacher_avatar
-      FROM lessons l
-      LEFT JOIN categories c ON l.category_id = c.id
-      LEFT JOIN teachers t ON l.teacher_id = t.id
-      WHERE l.category_id = ? AND l.id != ? AND l.available = 1
-      ORDER BY l.rating DESC
-      LIMIT 4
-    `,
-      [lesson.category_id, id]
-    );
+    const similarLessons = await Lesson.find({
+      category_id: lesson.category_id?._id,
+      _id: { $ne: lesson._id },
+      available: true,
+    })
+      .populate("category_id", "name")
+      .populate("teacher_id", "name title avatar")
+      .sort({ rating: -1 })
+      .limit(4)
+      .lean();
+
+    const transformedSimilar = similarLessons.map((l) => ({
+      ...l,
+      id: l._id.toString(),
+      category_name: l.category_id?.name,
+      teacher_name: l.teacher_id?.name,
+      teacher_title: l.teacher_id?.title,
+      teacher_avatar: l.teacher_id?.avatar,
+      category_id: l.category_id?._id.toString(),
+      teacher_id: l.teacher_id?._id.toString(),
+      created_at: l.createdAt,
+      updated_at: l.updatedAt,
+    }));
 
     // Get reviews for this lesson
-    const reviews = await dbQuery(
-      `
-      SELECT 
-        r.*,
-        u.name as user_name,
-        u.email as user_email
-      FROM reviews r
-      LEFT JOIN users u ON r.user_id = u.id
-      WHERE r.lesson_id = ?
-      ORDER BY r.created_at DESC
-      LIMIT 10
-    `,
-      [id]
-    );
+    const reviews = await Review.find({ lesson_id: id })
+      .populate("user_id", "name email")
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    const transformedReviews = reviews.map((review) => ({
+      ...review,
+      id: review._id.toString(),
+      user_name: review.user_id?.name,
+      user_email: review.user_id?.email,
+      user_id: review.user_id?._id.toString(),
+      created_at: review.createdAt,
+    }));
 
     res.json({
       success: true,
       data: {
-        lesson,
-        similarLessons,
-        reviews,
+        lesson: transformedLesson,
+        similarLessons: transformedSimilar,
+        reviews: transformedReviews,
       },
     });
   } catch (error) {
@@ -318,11 +377,11 @@ router.post(
       .isLength({ min: 3 })
       .withMessage("Title must be at least 3 characters"),
     body("category_id")
-      .isInt()
-      .withMessage("Category ID must be a valid integer"),
+      .notEmpty()
+      .withMessage("Category ID is required"),
     body("teacher_id")
-      .isInt()
-      .withMessage("Teacher ID must be a valid integer"),
+      .notEmpty()
+      .withMessage("Teacher ID is required"),
     body("price")
       .isFloat({ min: 0 })
       .withMessage("Price must be a positive number"),
@@ -366,9 +425,7 @@ router.post(
       } = req.body;
 
       // Check if category exists
-      const category = await dbGet("SELECT id FROM categories WHERE id = ?", [
-        category_id,
-      ]);
+      const category = await Category.findById(category_id);
       if (!category) {
         return res.status(400).json({
           success: false,
@@ -377,9 +434,7 @@ router.post(
       }
 
       // Check if teacher exists
-      const teacher = await dbGet("SELECT id FROM teachers WHERE id = ?", [
-        teacher_id,
-      ]);
+      const teacher = await Teacher.findById(teacher_id);
       if (!teacher) {
         return res.status(400).json({
           success: false,
@@ -405,53 +460,44 @@ router.post(
       }
 
       // Create lesson
-      const result = await dbRun(
-        `
-      INSERT INTO lessons (
-        title, category_id, teacher_id, price, price_unit, duration, 
-        schedule, age_group, description, image, features, max_students, 
-        featured, available
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `,
-        [
-          title,
-          category_id,
-          teacher_id,
-          price,
-          price_unit,
-          duration,
-          schedule,
-          age_group,
-          description,
-          imageUrl,
-          JSON.stringify(featuresArray),
-          max_students,
-          featured ? 1 : 0,
-          1,
-        ]
-      );
+      const lesson = await Lesson.create({
+        title,
+        category_id,
+        teacher_id,
+        price,
+        price_unit,
+        duration,
+        schedule,
+        age_group,
+        description,
+        image: imageUrl,
+        features: featuresArray,
+        max_students,
+        featured: featured || false,
+        available: true,
+      });
 
-      // Get the created lesson
-      const lesson = await dbGet(
-        `
-      SELECT 
-        l.*,
-        c.name as category_name,
-        t.name as teacher_name,
-        t.title as teacher_title,
-        t.avatar as teacher_avatar
-      FROM lessons l
-      LEFT JOIN categories c ON l.category_id = c.id
-      LEFT JOIN teachers t ON l.teacher_id = t.id
-      WHERE l.id = ?
-    `,
-        [result.id]
-      );
+      // Populate and transform
+      await lesson.populate("category_id", "name");
+      await lesson.populate("teacher_id", "name title avatar");
+
+      const transformedLesson = {
+        ...lesson.toObject(),
+        id: lesson._id.toString(),
+        category_name: lesson.category_id?.name,
+        teacher_name: lesson.teacher_id?.name,
+        teacher_title: lesson.teacher_id?.title,
+        teacher_avatar: lesson.teacher_id?.avatar,
+        category_id: lesson.category_id?._id.toString(),
+        teacher_id: lesson.teacher_id?._id.toString(),
+        created_at: lesson.createdAt,
+        updated_at: lesson.updatedAt,
+      };
 
       res.status(201).json({
         success: true,
         message: "Lesson created successfully",
-        data: { lesson },
+        data: { lesson: transformedLesson },
       });
     } catch (error) {
       console.error("Create lesson error:", error);
@@ -491,13 +537,9 @@ router.put(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const updateFields = [];
-      const updateValues = [];
 
       // Check if lesson exists
-      const existingLesson = await dbGet("SELECT * FROM lessons WHERE id = ?", [
-        id,
-      ]);
+      const existingLesson = await Lesson.findById(id);
       if (!existingLesson) {
         return res.status(404).json({
           success: false,
@@ -531,43 +573,18 @@ router.put(
         available,
       } = req.body;
 
-      // Build update query dynamically
-      if (title) {
-        updateFields.push("title = ?");
-        updateValues.push(title);
-      }
-      if (category_id) {
-        updateFields.push("category_id = ?");
-        updateValues.push(category_id);
-      }
-      if (teacher_id) {
-        updateFields.push("teacher_id = ?");
-        updateValues.push(teacher_id);
-      }
-      if (price !== undefined) {
-        updateFields.push("price = ?");
-        updateValues.push(price);
-      }
-      if (price_unit) {
-        updateFields.push("price_unit = ?");
-        updateValues.push(price_unit);
-      }
-      if (duration) {
-        updateFields.push("duration = ?");
-        updateValues.push(duration);
-      }
-      if (schedule) {
-        updateFields.push("schedule = ?");
-        updateValues.push(schedule);
-      }
-      if (age_group) {
-        updateFields.push("age_group = ?");
-        updateValues.push(age_group);
-      }
-      if (description) {
-        updateFields.push("description = ?");
-        updateValues.push(description);
-      }
+      // Build update object
+      const updateData = {};
+
+      if (title) updateData.title = title;
+      if (category_id) updateData.category_id = category_id;
+      if (teacher_id) updateData.teacher_id = teacher_id;
+      if (price !== undefined) updateData.price = price;
+      if (price_unit) updateData.price_unit = price_unit;
+      if (duration) updateData.duration = duration;
+      if (schedule) updateData.schedule = schedule;
+      if (age_group) updateData.age_group = age_group;
+      if (description) updateData.description = description;
       if (features) {
         let featuresArray = [];
         try {
@@ -576,64 +593,51 @@ router.put(
         } catch (e) {
           featuresArray = features.split(",").map((f) => f.trim());
         }
-        updateFields.push("features = ?");
-        updateValues.push(JSON.stringify(featuresArray));
+        updateData.features = featuresArray;
       }
-      if (max_students !== undefined) {
-        updateFields.push("max_students = ?");
-        updateValues.push(max_students);
-      }
-      if (featured !== undefined) {
-        updateFields.push("featured = ?");
-        updateValues.push(featured ? 1 : 0);
-      }
-      if (available !== undefined) {
-        updateFields.push("available = ?");
-        updateValues.push(available ? 1 : 0);
-      }
+      if (max_students !== undefined) updateData.max_students = max_students;
+      if (featured !== undefined) updateData.featured = featured;
+      if (available !== undefined) updateData.available = available;
 
       // Handle image upload
       if (req.file) {
-        updateFields.push("image = ?");
-        updateValues.push(`/uploads/${req.file.filename}`);
+        updateData.image = `/uploads/${req.file.filename}`;
       }
 
-      if (updateFields.length === 0) {
+      if (Object.keys(updateData).length === 0) {
         return res.status(400).json({
           success: false,
           message: "No fields to update",
         });
       }
 
-      updateFields.push("updated_at = CURRENT_TIMESTAMP");
-      updateValues.push(id);
+      // Update lesson
+      const lesson = await Lesson.findByIdAndUpdate(
+        id,
+        updateData,
+        { new: true, runValidators: true }
+      )
+        .populate("category_id", "name")
+        .populate("teacher_id", "name title avatar")
+        .lean();
 
-      await dbRun(
-        `UPDATE lessons SET ${updateFields.join(", ")} WHERE id = ?`,
-        updateValues
-      );
-
-      // Get updated lesson
-      const lesson = await dbGet(
-        `
-      SELECT 
-        l.*,
-        c.name as category_name,
-        t.name as teacher_name,
-        t.title as teacher_title,
-        t.avatar as teacher_avatar
-      FROM lessons l
-      LEFT JOIN categories c ON l.category_id = c.id
-      LEFT JOIN teachers t ON l.teacher_id = t.id
-      WHERE l.id = ?
-    `,
-        [id]
-      );
+      const transformedLesson = {
+        ...lesson,
+        id: lesson._id.toString(),
+        category_name: lesson.category_id?.name,
+        teacher_name: lesson.teacher_id?.name,
+        teacher_title: lesson.teacher_id?.title,
+        teacher_avatar: lesson.teacher_id?.avatar,
+        category_id: lesson.category_id?._id.toString(),
+        teacher_id: lesson.teacher_id?._id.toString(),
+        created_at: lesson.createdAt,
+        updated_at: lesson.updatedAt,
+      };
 
       res.json({
         success: true,
         message: "Lesson updated successfully",
-        data: { lesson },
+        data: { lesson: transformedLesson },
       });
     } catch (error) {
       console.error("Update lesson error:", error);
@@ -653,7 +657,7 @@ router.delete("/:id", authenticateToken, requireAdmin, async (req, res) => {
     const { id } = req.params;
 
     // Check if lesson exists
-    const lesson = await dbGet("SELECT * FROM lessons WHERE id = ?", [id]);
+    const lesson = await Lesson.findById(id);
     if (!lesson) {
       return res.status(404).json({
         success: false,
@@ -662,7 +666,7 @@ router.delete("/:id", authenticateToken, requireAdmin, async (req, res) => {
     }
 
     // Delete lesson
-    await dbRun("DELETE FROM lessons WHERE id = ?", [id]);
+    await Lesson.findByIdAndDelete(id);
 
     res.json({
       success: true,

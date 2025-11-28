@@ -1,6 +1,10 @@
 import express from "express";
 import { body, validationResult } from "express-validator";
-import { dbQuery, dbGet, dbRun } from "../config/database.js";
+import Enrollment from "../models/Enrollment.js";
+import CartItem from "../models/CartItem.js";
+import Lesson from "../models/Lesson.js";
+import Category from "../models/Category.js";
+import Teacher from "../models/Teacher.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -71,22 +75,9 @@ router.post(
       } = req.body;
 
       // Get user's cart items
-      const cartItems = await dbQuery(
-        `
-      SELECT 
-        ci.*,
-        l.title,
-        l.price,
-        l.price_unit,
-        l.max_students,
-        l.students_enrolled,
-        l.available
-      FROM cart_items ci
-      LEFT JOIN lessons l ON ci.lesson_id = l.id
-      WHERE ci.user_id = ?
-    `,
-        [req.user.id]
-      );
+      const cartItems = await CartItem.find({ user_id: req.user.id })
+        .populate("lesson_id", "title price price_unit max_students students_enrolled available")
+        .lean();
 
       if (cartItems.length === 0) {
         return res.status(400).json({
@@ -97,24 +88,32 @@ router.post(
 
       // Validate all cart items
       for (const item of cartItems) {
-        if (!item.available) {
+        const lesson = item.lesson_id;
+        if (!lesson) {
           return res.status(400).json({
             success: false,
-            message: `${item.title} is no longer available`,
+            message: "One or more lessons not found",
           });
         }
 
-        if (item.students_enrolled + item.quantity > item.max_students) {
+        if (!lesson.available) {
           return res.status(400).json({
             success: false,
-            message: `Not enough spots available for ${item.title}`,
+            message: `${lesson.title} is no longer available`,
+          });
+        }
+
+        if (lesson.students_enrolled + item.quantity > lesson.max_students) {
+          return res.status(400).json({
+            success: false,
+            message: `Not enough spots available for ${lesson.title}`,
           });
         }
       }
 
       // Calculate totals
       const subtotal = cartItems.reduce((total, item) => {
-        return total + item.price * item.quantity;
+        return total + item.lesson_id.price * item.quantity;
       }, 0);
 
       const tax = subtotal * 0.1; // 10% tax
@@ -127,51 +126,43 @@ router.post(
       const enrollments = [];
 
       for (const item of cartItems) {
+        const lesson = item.lesson_id;
         // Create enrollment record
-        const enrollmentResult = await dbRun(
-          `
-        INSERT INTO enrollments (
-          user_id, lesson_id, student_name, student_age, student_grade,
-          special_notes, quantity, total_amount, payment_method, payment_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-          [
-            req.user.id,
-            item.lesson_id,
-            student_name,
-            student_age,
-            student_grade,
-            special_notes,
-            item.quantity,
-            item.price * item.quantity,
-            payment_method,
-            payment_id,
-          ]
-        );
+        const enrollment = await Enrollment.create({
+          user_id: req.user.id,
+          lesson_id: lesson._id,
+          student_name,
+          student_age,
+          student_grade,
+          special_notes,
+          quantity: item.quantity,
+          total_amount: lesson.price * item.quantity,
+          payment_method,
+          payment_id,
+        });
 
         // Update lesson enrollment count
-        await dbRun(
-          "UPDATE lessons SET students_enrolled = students_enrolled + ? WHERE id = ?",
-          [item.quantity, item.lesson_id]
-        );
+        await Lesson.findByIdAndUpdate(lesson._id, {
+          $inc: { students_enrolled: item.quantity },
+        });
 
         enrollments.push({
-          id: enrollmentResult.id,
-          lesson_id: item.lesson_id,
-          title: item.title,
+          id: enrollment._id.toString(),
+          lesson_id: lesson._id.toString(),
+          title: lesson.title,
           quantity: item.quantity,
-          amount: item.price * item.quantity,
+          amount: lesson.price * item.quantity,
         });
       }
 
       // Clear cart after successful enrollment
-      await dbRun("DELETE FROM cart_items WHERE user_id = ?", [req.user.id]);
+      await CartItem.deleteMany({ user_id: req.user.id });
 
       // In a real application, you would process payment here
       // For demo purposes, we'll mark as paid
-      await dbRun(
-        "UPDATE enrollments SET payment_status = ?, status = ? WHERE payment_id = ?",
-        ["paid", "confirmed", payment_id]
+      await Enrollment.updateMany(
+        { payment_id },
+        { payment_status: "paid", status: "confirmed" }
       );
 
       res.status(201).json({
@@ -206,63 +197,51 @@ router.get("/", authenticateToken, async (req, res) => {
   try {
     const { status, page = 1, limit = 10 } = req.query;
 
-    let sql = `
-      SELECT 
-        e.*,
-        l.title,
-        l.description,
-        l.image,
-        l.duration,
-        l.schedule,
-        l.age_group,
-        c.name as category_name,
-        t.name as teacher_name,
-        t.title as teacher_title,
-        t.avatar as teacher_avatar
-      FROM enrollments e
-      LEFT JOIN lessons l ON e.lesson_id = l.id
-      LEFT JOIN categories c ON l.category_id = c.id
-      LEFT JOIN teachers t ON l.teacher_id = t.id
-      WHERE e.user_id = ?
-    `;
-
-    const params = [req.user.id];
-
+    const filter = { user_id: req.user.id };
     if (status) {
-      sql += " AND e.status = ?";
-      params.push(status);
+      filter.status = status;
     }
 
-    sql += " ORDER BY e.enrolled_at DESC";
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Add pagination
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-    sql += " LIMIT ? OFFSET ?";
-    params.push(parseInt(limit), offset);
+    const enrollments = await Enrollment.find(filter)
+      .populate({
+        path: "lesson_id",
+        populate: [
+          { path: "category_id", select: "name" },
+          { path: "teacher_id", select: "name title avatar" },
+        ],
+      })
+      .sort({ enrolled_at: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
 
-    const enrollments = await dbQuery(sql, params);
+    const transformedEnrollments = enrollments.map((enrollment) => ({
+      ...enrollment,
+      id: enrollment._id.toString(),
+      user_id: enrollment.user_id.toString(),
+      lesson_id: enrollment.lesson_id?._id.toString(),
+      title: enrollment.lesson_id?.title,
+      description: enrollment.lesson_id?.description,
+      image: enrollment.lesson_id?.image,
+      duration: enrollment.lesson_id?.duration,
+      schedule: enrollment.lesson_id?.schedule,
+      age_group: enrollment.lesson_id?.age_group,
+      category_name: enrollment.lesson_id?.category_id?.name,
+      teacher_name: enrollment.lesson_id?.teacher_id?.name,
+      teacher_title: enrollment.lesson_id?.teacher_id?.title,
+      teacher_avatar: enrollment.lesson_id?.teacher_id?.avatar,
+      enrolled_at: enrollment.enrolled_at || enrollment.createdAt,
+    }));
 
-    // Get total count
-    let countSql = `
-      SELECT COUNT(*) as total
-      FROM enrollments e
-      WHERE e.user_id = ?
-    `;
-    const countParams = [req.user.id];
-
-    if (status) {
-      countSql += " AND e.status = ?";
-      countParams.push(status);
-    }
-
-    const countResult = await dbGet(countSql, countParams);
-    const total = countResult.total;
+    const total = await Enrollment.countDocuments(filter);
     const totalPages = Math.ceil(total / parseInt(limit));
 
     res.json({
       success: true,
       data: {
-        enrollments,
+        enrollments: transformedEnrollments,
         pagination: {
           currentPage: parseInt(page),
           totalPages,
@@ -289,32 +268,18 @@ router.get("/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const enrollment = await dbGet(
-      `
-      SELECT 
-        e.*,
-        l.title,
-        l.description,
-        l.image,
-        l.duration,
-        l.schedule,
-        l.age_group,
-        l.price,
-        l.price_unit,
-        c.name as category_name,
-        t.name as teacher_name,
-        t.title as teacher_title,
-        t.avatar as teacher_avatar,
-        t.phone as teacher_phone,
-        t.email as teacher_email
-      FROM enrollments e
-      LEFT JOIN lessons l ON e.lesson_id = l.id
-      LEFT JOIN categories c ON l.category_id = c.id
-      LEFT JOIN teachers t ON l.teacher_id = t.id
-      WHERE e.id = ? AND e.user_id = ?
-    `,
-      [id, req.user.id]
-    );
+    const enrollment = await Enrollment.findOne({
+      _id: id,
+      user_id: req.user.id,
+    })
+      .populate({
+        path: "lesson_id",
+        populate: [
+          { path: "category_id", select: "name" },
+          { path: "teacher_id", select: "name title avatar phone email" },
+        ],
+      })
+      .lean();
 
     if (!enrollment) {
       return res.status(404).json({
@@ -323,9 +288,31 @@ router.get("/:id", authenticateToken, async (req, res) => {
       });
     }
 
+    const transformedEnrollment = {
+      ...enrollment,
+      id: enrollment._id.toString(),
+      user_id: enrollment.user_id.toString(),
+      lesson_id: enrollment.lesson_id?._id.toString(),
+      title: enrollment.lesson_id?.title,
+      description: enrollment.lesson_id?.description,
+      image: enrollment.lesson_id?.image,
+      duration: enrollment.lesson_id?.duration,
+      schedule: enrollment.lesson_id?.schedule,
+      age_group: enrollment.lesson_id?.age_group,
+      price: enrollment.lesson_id?.price,
+      price_unit: enrollment.lesson_id?.price_unit,
+      category_name: enrollment.lesson_id?.category_id?.name,
+      teacher_name: enrollment.lesson_id?.teacher_id?.name,
+      teacher_title: enrollment.lesson_id?.teacher_id?.title,
+      teacher_avatar: enrollment.lesson_id?.teacher_id?.avatar,
+      teacher_phone: enrollment.lesson_id?.teacher_id?.phone,
+      teacher_email: enrollment.lesson_id?.teacher_id?.email,
+      enrolled_at: enrollment.enrolled_at || enrollment.createdAt,
+    };
+
     res.json({
       success: true,
-      data: { enrollment },
+      data: { enrollment: transformedEnrollment },
     });
   } catch (error) {
     console.error("Get enrollment error:", error);
@@ -349,10 +336,10 @@ router.put(
       const { reason } = req.body;
 
       // Check if enrollment exists and belongs to user
-      const enrollment = await dbGet(
-        "SELECT * FROM enrollments WHERE id = ? AND user_id = ?",
-        [id, req.user.id]
-      );
+      const enrollment = await Enrollment.findOne({
+        _id: id,
+        user_id: req.user.id,
+      });
 
       if (!enrollment) {
         return res.status(404).json({
@@ -377,16 +364,14 @@ router.put(
       }
 
       // Update enrollment status
-      await dbRun(
-        "UPDATE enrollments SET status = ?, special_notes = ? WHERE id = ?",
-        ["cancelled", reason || "Cancelled by user", id]
-      );
+      enrollment.status = "cancelled";
+      enrollment.special_notes = reason || "Cancelled by user";
+      await enrollment.save();
 
       // Update lesson enrollment count
-      await dbRun(
-        "UPDATE lessons SET students_enrolled = students_enrolled - ? WHERE id = ?",
-        [enrollment.quantity, enrollment.lesson_id]
-      );
+      await Lesson.findByIdAndUpdate(enrollment.lesson_id, {
+        $inc: { students_enrolled: -enrollment.quantity },
+      });
 
       res.json({
         success: true,
@@ -407,20 +392,16 @@ router.put(
 // @access  Private
 router.get("/summary", authenticateToken, async (req, res) => {
   try {
-    const summary = await dbGet(
-      `
-      SELECT 
-        COUNT(*) as total_enrollments,
-        SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed_enrollments,
-        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_enrollments,
-        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_enrollments,
-        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_enrollments,
-        SUM(total_amount) as total_spent
-      FROM enrollments 
-      WHERE user_id = ?
-    `,
-      [req.user.id]
-    );
+    const enrollments = await Enrollment.find({ user_id: req.user.id });
+
+    const summary = {
+      total_enrollments: enrollments.length,
+      confirmed_enrollments: enrollments.filter((e) => e.status === "confirmed").length,
+      pending_enrollments: enrollments.filter((e) => e.status === "pending").length,
+      cancelled_enrollments: enrollments.filter((e) => e.status === "cancelled").length,
+      completed_enrollments: enrollments.filter((e) => e.status === "completed").length,
+      total_spent: enrollments.reduce((sum, e) => sum + (e.total_amount || 0), 0),
+    };
 
     res.json({
       success: true,

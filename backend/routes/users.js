@@ -1,6 +1,11 @@
 import express from "express";
 import { body, validationResult } from "express-validator";
-import { dbQuery, dbGet, dbRun } from "../config/database.js";
+import User from "../models/User.js";
+import Enrollment from "../models/Enrollment.js";
+import Review from "../models/Review.js";
+import Lesson from "../models/Lesson.js";
+import Category from "../models/Category.js";
+import Teacher from "../models/Teacher.js";
 import { authenticateToken, requireAdmin } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -10,16 +15,7 @@ const router = express.Router();
 // @access  Private
 router.get("/profile", authenticateToken, async (req, res) => {
   try {
-    const user = await dbGet(
-      `
-      SELECT 
-        id, name, email, role, phone, address, city, state, zip, 
-        created_at, updated_at
-      FROM users 
-      WHERE id = ?
-    `,
-      [req.user.id]
-    );
+    const user = await User.findById(req.user.id).select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -28,9 +24,23 @@ router.get("/profile", authenticateToken, async (req, res) => {
       });
     }
 
+    const userData = {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      address: user.address,
+      city: user.city,
+      state: user.state,
+      zip: user.zip,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt,
+    };
+
     res.json({
       success: true,
-      data: { user },
+      data: { user: userData },
     });
   } catch (error) {
     console.error("Get profile error:", error);
@@ -46,33 +56,38 @@ router.get("/profile", authenticateToken, async (req, res) => {
 // @access  Private
 router.get("/enrollments", authenticateToken, async (req, res) => {
   try {
-    const enrollments = await dbQuery(
-      `
-      SELECT 
-        e.*,
-        l.title,
-        l.description,
-        l.image,
-        l.duration,
-        l.schedule,
-        l.age_group,
-        c.name as category_name,
-        t.name as teacher_name,
-        t.title as teacher_title,
-        t.avatar as teacher_avatar
-      FROM enrollments e
-      LEFT JOIN lessons l ON e.lesson_id = l.id
-      LEFT JOIN categories c ON l.category_id = c.id
-      LEFT JOIN teachers t ON l.teacher_id = t.id
-      WHERE e.user_id = ?
-      ORDER BY e.enrolled_at DESC
-    `,
-      [req.user.id]
-    );
+    const enrollments = await Enrollment.find({ user_id: req.user.id })
+      .populate({
+        path: "lesson_id",
+        populate: [
+          { path: "category_id", select: "name" },
+          { path: "teacher_id", select: "name title avatar" },
+        ],
+      })
+      .sort({ enrolled_at: -1 })
+      .lean();
+
+    const transformedEnrollments = enrollments.map((enrollment) => ({
+      ...enrollment,
+      id: enrollment._id.toString(),
+      user_id: enrollment.user_id.toString(),
+      lesson_id: enrollment.lesson_id?._id.toString(),
+      title: enrollment.lesson_id?.title,
+      description: enrollment.lesson_id?.description,
+      image: enrollment.lesson_id?.image,
+      duration: enrollment.lesson_id?.duration,
+      schedule: enrollment.lesson_id?.schedule,
+      age_group: enrollment.lesson_id?.age_group,
+      category_name: enrollment.lesson_id?.category_id?.name,
+      teacher_name: enrollment.lesson_id?.teacher_id?.name,
+      teacher_title: enrollment.lesson_id?.teacher_id?.title,
+      teacher_avatar: enrollment.lesson_id?.teacher_id?.avatar,
+      enrolled_at: enrollment.enrolled_at || enrollment.createdAt,
+    }));
 
     res.json({
       success: true,
-      data: { enrollments },
+      data: { enrollments: transformedEnrollments },
     });
   } catch (error) {
     console.error("Get user enrollments error:", error);
@@ -88,25 +103,28 @@ router.get("/enrollments", authenticateToken, async (req, res) => {
 // @access  Private
 router.get("/reviews", authenticateToken, async (req, res) => {
   try {
-    const reviews = await dbQuery(
-      `
-      SELECT 
-        r.*,
-        l.title,
-        l.image,
-        c.name as category_name
-      FROM reviews r
-      LEFT JOIN lessons l ON r.lesson_id = l.id
-      LEFT JOIN categories c ON l.category_id = c.id
-      WHERE r.user_id = ?
-      ORDER BY r.created_at DESC
-    `,
-      [req.user.id]
-    );
+    const reviews = await Review.find({ user_id: req.user.id })
+      .populate({
+        path: "lesson_id",
+        populate: { path: "category_id", select: "name" },
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const transformedReviews = reviews.map((review) => ({
+      ...review,
+      id: review._id.toString(),
+      user_id: review.user_id.toString(),
+      lesson_id: review.lesson_id?._id.toString(),
+      title: review.lesson_id?.title,
+      image: review.lesson_id?.image,
+      category_name: review.lesson_id?.category_id?.name,
+      created_at: review.createdAt,
+    }));
 
     res.json({
       success: true,
-      data: { reviews },
+      data: { reviews: transformedReviews },
     });
   } catch (error) {
     console.error("Get user reviews error:", error);
@@ -124,7 +142,7 @@ router.post(
   "/reviews",
   authenticateToken,
   [
-    body("lesson_id").isInt().withMessage("Lesson ID must be a valid integer"),
+    body("lesson_id").notEmpty().withMessage("Lesson ID is required"),
     body("rating")
       .isInt({ min: 1, max: 5 })
       .withMessage("Rating must be between 1 and 5"),
@@ -149,10 +167,11 @@ router.post(
       const { lesson_id, rating, comment } = req.body;
 
       // Check if user is enrolled in this lesson
-      const enrollment = await dbGet(
-        'SELECT id FROM enrollments WHERE user_id = ? AND lesson_id = ? AND status IN ("confirmed", "completed")',
-        [req.user.id, lesson_id]
-      );
+      const enrollment = await Enrollment.findOne({
+        user_id: req.user.id,
+        lesson_id: lesson_id,
+        status: { $in: ["confirmed", "completed"] },
+      });
 
       if (!enrollment) {
         return res.status(400).json({
@@ -162,10 +181,10 @@ router.post(
       }
 
       // Check if user already reviewed this lesson
-      const existingReview = await dbGet(
-        "SELECT id FROM reviews WHERE user_id = ? AND lesson_id = ?",
-        [req.user.id, lesson_id]
-      );
+      const existingReview = await Review.findOne({
+        user_id: req.user.id,
+        lesson_id: lesson_id,
+      });
 
       if (existingReview) {
         return res.status(400).json({
@@ -175,36 +194,38 @@ router.post(
       }
 
       // Create review
-      const result = await dbRun(
-        "INSERT INTO reviews (user_id, lesson_id, rating, comment) VALUES (?, ?, ?, ?)",
-        [req.user.id, lesson_id, rating, comment]
-      );
+      const review = await Review.create({
+        user_id: req.user.id,
+        lesson_id: lesson_id,
+        rating,
+        comment,
+      });
 
       // Update lesson rating
-      const lessonReviews = await dbQuery(
-        "SELECT rating FROM reviews WHERE lesson_id = ?",
-        [lesson_id]
-      );
+      const lessonReviews = await Review.find({ lesson_id: lesson_id });
 
       const averageRating =
         lessonReviews.reduce((sum, review) => sum + review.rating, 0) /
         lessonReviews.length;
 
-      await dbRun("UPDATE lessons SET rating = ?, reviews = ? WHERE id = ?", [
-        averageRating,
-        lessonReviews.length,
-        lesson_id,
-      ]);
+      await Lesson.findByIdAndUpdate(lesson_id, {
+        rating: averageRating,
+        reviews: lessonReviews.length,
+      });
 
-      // Get the created review
-      const review = await dbGet("SELECT * FROM reviews WHERE id = ?", [
-        result.id,
-      ]);
+      const reviewData = {
+        id: review._id.toString(),
+        user_id: review.user_id.toString(),
+        lesson_id: review.lesson_id.toString(),
+        rating: review.rating,
+        comment: review.comment,
+        created_at: review.createdAt,
+      };
 
       res.status(201).json({
         success: true,
         message: "Review added successfully",
-        data: { review },
+        data: { review: reviewData },
       });
     } catch (error) {
       console.error("Add review error:", error);
@@ -222,59 +243,80 @@ router.post(
 router.get("/dashboard", authenticateToken, async (req, res) => {
   try {
     // Get user stats
-    const stats = await dbGet(
-      `
-      SELECT 
-        (SELECT COUNT(*) FROM enrollments WHERE user_id = ?) as total_enrollments,
-        (SELECT COUNT(*) FROM enrollments WHERE user_id = ? AND status = 'confirmed') as active_enrollments,
-        (SELECT COUNT(*) FROM reviews WHERE user_id = ?) as total_reviews,
-        (SELECT SUM(total_amount) FROM enrollments WHERE user_id = ? AND payment_status = 'paid') as total_spent
-    `,
-      [req.user.id, req.user.id, req.user.id, req.user.id]
+    const totalEnrollments = await Enrollment.countDocuments({
+      user_id: req.user.id,
+    });
+    const activeEnrollments = await Enrollment.countDocuments({
+      user_id: req.user.id,
+      status: "confirmed",
+    });
+    const totalReviews = await Review.countDocuments({
+      user_id: req.user.id,
+    });
+    const paidEnrollments = await Enrollment.find({
+      user_id: req.user.id,
+      payment_status: "paid",
+    });
+    const totalSpent = paidEnrollments.reduce(
+      (sum, e) => sum + (e.total_amount || 0),
+      0
     );
+
+    const stats = {
+      total_enrollments: totalEnrollments,
+      active_enrollments: activeEnrollments,
+      total_reviews: totalReviews,
+      total_spent: totalSpent,
+    };
 
     // Get recent enrollments
-    const recentEnrollments = await dbQuery(
-      `
-      SELECT 
-        e.*,
-        l.title,
-        l.image,
-        c.name as category_name
-      FROM enrollments e
-      LEFT JOIN lessons l ON e.lesson_id = l.id
-      LEFT JOIN categories c ON l.category_id = c.id
-      WHERE e.user_id = ?
-      ORDER BY e.enrolled_at DESC
-      LIMIT 5
-    `,
-      [req.user.id]
-    );
+    const recentEnrollments = await Enrollment.find({ user_id: req.user.id })
+      .populate({
+        path: "lesson_id",
+        populate: { path: "category_id", select: "name" },
+      })
+      .sort({ enrolled_at: -1 })
+      .limit(5)
+      .lean();
+
+    const transformedRecent = recentEnrollments.map((e) => ({
+      ...e,
+      id: e._id.toString(),
+      title: e.lesson_id?.title,
+      image: e.lesson_id?.image,
+      category_name: e.lesson_id?.category_id?.name,
+      enrolled_at: e.enrolled_at || e.createdAt,
+    }));
 
     // Get upcoming lessons (if any)
-    const upcomingLessons = await dbQuery(
-      `
-      SELECT 
-        l.*,
-        c.name as category_name,
-        t.name as teacher_name
-      FROM enrollments e
-      LEFT JOIN lessons l ON e.lesson_id = l.id
-      LEFT JOIN categories c ON l.category_id = c.id
-      LEFT JOIN teachers t ON l.teacher_id = t.id
-      WHERE e.user_id = ? AND e.status = 'confirmed'
-      ORDER BY e.enrolled_at ASC
-      LIMIT 5
-    `,
-      [req.user.id]
-    );
+    const upcomingLessons = await Enrollment.find({
+      user_id: req.user.id,
+      status: "confirmed",
+    })
+      .populate({
+        path: "lesson_id",
+        populate: [
+          { path: "category_id", select: "name" },
+          { path: "teacher_id", select: "name" },
+        ],
+      })
+      .sort({ enrolled_at: 1 })
+      .limit(5)
+      .lean();
+
+    const transformedUpcoming = upcomingLessons.map((e) => ({
+      ...e.lesson_id,
+      id: e.lesson_id?._id.toString(),
+      category_name: e.lesson_id?.category_id?.name,
+      teacher_name: e.lesson_id?.teacher_id?.name,
+    }));
 
     res.json({
       success: true,
       data: {
         stats,
-        recentEnrollments,
-        upcomingLessons,
+        recentEnrollments: transformedRecent,
+        upcomingLessons: transformedUpcoming,
       },
     });
   } catch (error) {
@@ -293,57 +335,49 @@ router.get("/", authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { page = 1, limit = 20, role, search } = req.query;
 
-    let sql = `
-      SELECT 
-        id, name, email, role, phone, address, city, state, zip,
-        created_at, updated_at
-      FROM users 
-      WHERE 1=1
-    `;
-
-    const params = [];
+    const filter = {};
 
     if (role) {
-      sql += " AND role = ?";
-      params.push(role);
+      filter.role = role;
     }
 
     if (search) {
-      sql += " AND (name LIKE ? OR email LIKE ?)";
-      params.push(`%${search}%`, `%${search}%`);
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
     }
 
-    sql += " ORDER BY created_at DESC";
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Add pagination
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-    sql += " LIMIT ? OFFSET ?";
-    params.push(parseInt(limit), offset);
+    const users = await User.find(filter)
+      .select("-password")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
 
-    const users = await dbQuery(sql, params);
+    const transformedUsers = users.map((user) => ({
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      address: user.address,
+      city: user.city,
+      state: user.state,
+      zip: user.zip,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt,
+    }));
 
-    // Get total count
-    let countSql = "SELECT COUNT(*) as total FROM users WHERE 1=1";
-    const countParams = [];
-
-    if (role) {
-      countSql += " AND role = ?";
-      countParams.push(role);
-    }
-
-    if (search) {
-      countSql += " AND (name LIKE ? OR email LIKE ?)";
-      countParams.push(`%${search}%`, `%${search}%`);
-    }
-
-    const countResult = await dbGet(countSql, countParams);
-    const total = countResult.total;
+    const total = await User.countDocuments(filter);
     const totalPages = Math.ceil(total / parseInt(limit));
 
     res.json({
       success: true,
       data: {
-        users,
+        users: transformedUsers,
         pagination: {
           currentPage: parseInt(page),
           totalPages,

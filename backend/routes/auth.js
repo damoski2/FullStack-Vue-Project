@@ -2,7 +2,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { body, validationResult } from "express-validator";
-import { dbGet, dbRun } from "../config/database.js";
+import User from "../models/User.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -51,9 +51,7 @@ router.post(
       const { name, email, password, role = "parent" } = req.body;
 
       // Check if user already exists
-      const existingUser = await dbGet("SELECT id FROM users WHERE email = ?", [
-        email,
-      ]);
+      const existingUser = await User.findOne({ email });
       if (existingUser) {
         return res.status(400).json({
           success: false,
@@ -66,25 +64,30 @@ router.post(
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
       // Create user
-      const result = await dbRun(
-        "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
-        [name, email, hashedPassword, role]
-      );
+      const user = await User.create({
+        name,
+        email,
+        password: hashedPassword,
+        role,
+      });
 
       // Generate token
-      const token = generateToken(result.id);
+      const token = generateToken(user._id.toString());
 
       // Get user data (without password)
-      const user = await dbGet(
-        "SELECT id, name, email, role, created_at FROM users WHERE id = ?",
-        [result.id]
-      );
+      const userData = {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        created_at: user.createdAt,
+      };
 
       res.status(201).json({
         success: true,
         message: "User registered successfully",
         data: {
-          user,
+          user: userData,
           token,
         },
       });
@@ -125,7 +128,7 @@ router.post(
       const { email, password } = req.body;
 
       // Find user
-      const user = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
+      const user = await User.findOne({ email });
       if (!user) {
         return res.status(401).json({
           success: false,
@@ -143,10 +146,22 @@ router.post(
       }
 
       // Generate token
-      const token = generateToken(user.id);
+      const token = generateToken(user._id.toString());
 
       // Remove password from response
-      const { password: _, ...userWithoutPassword } = user;
+      const userWithoutPassword = {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        address: user.address,
+        city: user.city,
+        state: user.state,
+        zip: user.zip,
+        created_at: user.createdAt,
+        updated_at: user.updatedAt,
+      };
 
       res.json({
         success: true,
@@ -171,9 +186,8 @@ router.post(
 // @access  Private
 router.get("/me", authenticateToken, async (req, res) => {
   try {
-    const user = await dbGet(
-      "SELECT id, name, email, role, phone, address, city, state, zip, created_at FROM users WHERE id = ?",
-      [req.user.id]
+    const user = await User.findById(req.user.id).select(
+      "-password"
     );
 
     if (!user) {
@@ -183,9 +197,23 @@ router.get("/me", authenticateToken, async (req, res) => {
       });
     }
 
+    const userData = {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      address: user.address,
+      city: user.city,
+      state: user.state,
+      zip: user.zip,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt,
+    };
+
     res.json({
       success: true,
-      data: { user },
+      data: { user: userData },
     });
   } catch (error) {
     console.error("Get user error:", error);
@@ -230,54 +258,48 @@ router.put(
       }
 
       const { name, phone, address, city, state, zip } = req.body;
-      const updateFields = [];
-      const updateValues = [];
+      const updateData = {};
 
-      if (name) {
-        updateFields.push("name = ?");
-        updateValues.push(name);
-      }
-      if (phone) {
-        updateFields.push("phone = ?");
-        updateValues.push(phone);
-      }
-      if (address) {
-        updateFields.push("address = ?");
-        updateValues.push(address);
-      }
-      if (city) {
-        updateFields.push("city = ?");
-        updateValues.push(city);
-      }
-      if (state) {
-        updateFields.push("state = ?");
-        updateValues.push(state);
-      }
-      if (zip) {
-        updateFields.push("zip = ?");
-        updateValues.push(zip);
-      }
+      if (name) updateData.name = name;
+      if (phone) updateData.phone = phone;
+      if (address) updateData.address = address;
+      if (city) updateData.city = city;
+      if (state) updateData.state = state;
+      if (zip) updateData.zip = zip;
 
-      if (updateFields.length === 0) {
+      if (Object.keys(updateData).length === 0) {
         return res.status(400).json({
           success: false,
           message: "No fields to update",
         });
       }
 
-      updateFields.push("updated_at = CURRENT_TIMESTAMP");
-      updateValues.push(req.user.id);
+      const user = await User.findByIdAndUpdate(
+        req.user.id,
+        updateData,
+        { new: true, runValidators: true }
+      ).select("-password");
 
-      await dbRun(
-        `UPDATE users SET ${updateFields.join(", ")} WHERE id = ?`,
-        updateValues
-      );
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
 
-      // Get updated user
-      const user = await dbGet(
-        "SELECT id, name, email, role, phone, address, city, state, zip, created_at, updated_at FROM users WHERE id = ?",
-        [req.user.id]
-      );
+      const userData = {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        address: user.address,
+        city: user.city,
+        state: user.state,
+        zip: user.zip,
+        created_at: user.createdAt,
+        updated_at: user.updatedAt,
+      };
 
       res.json({
         success: true,
@@ -323,9 +345,7 @@ router.post(
       const { currentPassword, newPassword } = req.body;
 
       // Get current user with password
-      const user = await dbGet("SELECT password FROM users WHERE id = ?", [
-        req.user.id,
-      ]);
+      const user = await User.findById(req.user.id);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -350,10 +370,8 @@ router.post(
       const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
       // Update password
-      await dbRun(
-        "UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-        [hashedNewPassword, req.user.id]
-      );
+      user.password = hashedNewPassword;
+      await user.save();
 
       res.json({
         success: true,

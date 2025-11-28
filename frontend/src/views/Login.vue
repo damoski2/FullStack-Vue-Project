@@ -31,29 +31,53 @@
         <!-- Form -->
         <form @submit.prevent="handleLogin" class="space-y-6">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2"
+            <label
+              for="login-email"
+              class="block text-sm font-medium text-gray-700 mb-2"
               >Email Address</label
             >
             <input
+              id="login-email"
               v-model="email"
               type="email"
               required
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              :class="[
+                'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all',
+                errors.email
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 focus:ring-blue-500',
+              ]"
               placeholder="you@example.com"
+              @input="clearError('email')"
             />
+            <p v-if="errors.email" class="mt-1 text-sm text-red-600">
+              {{ errors.email }}
+            </p>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2"
+            <label
+              for="login-password"
+              class="block text-sm font-medium text-gray-700 mb-2"
               >Password</label
             >
             <input
+              id="login-password"
               v-model="password"
               type="password"
               required
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              :class="[
+                'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all',
+                errors.password
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 focus:ring-blue-500',
+              ]"
               placeholder="••••••••"
+              @input="clearError('password')"
             />
+            <p v-if="errors.password" class="mt-1 text-sm text-red-600">
+              {{ errors.password }}
+            </p>
           </div>
 
           <div class="flex items-center justify-between">
@@ -69,11 +93,25 @@
             >
           </div>
 
+          <div
+            v-if="errorMessage"
+            class="p-3 bg-red-50 border border-red-200 rounded-lg"
+          >
+            <p class="text-sm text-red-600">{{ errorMessage }}</p>
+          </div>
+
           <button
             type="submit"
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors"
+            :disabled="isLoading"
+            :class="[
+              'w-full text-white py-3 rounded-lg font-semibold transition-colors',
+              isLoading
+                ? 'bg-blue-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700',
+            ]"
           >
-            Sign In
+            <span v-if="isLoading">Signing in...</span>
+            <span v-else>Sign In</span>
           </button>
         </form>
 
@@ -145,16 +183,95 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import store from "../store";
+import apiService from "../services/api.js";
 
 const router = useRouter();
 const email = ref("");
 const password = ref("");
+const isLoading = ref(false);
+const errorMessage = ref("");
+const errors = ref({
+  email: "",
+  password: "",
+});
 
-const handleLogin = () => {
-  if (email.value && password.value) {
-    store.login(email.value, password.value);
-    alert("Login successful!");
-    router.push("/");
+const clearError = (field) => {
+  if (errors.value[field]) {
+    errors.value[field] = "";
+  }
+  if (errorMessage.value) {
+    errorMessage.value = "";
+  }
+};
+
+const handleLogin = async () => {
+  // Reset errors
+  errorMessage.value = "";
+  errors.value = {
+    email: "",
+    password: "",
+  };
+
+  // Basic validation
+  if (!email.value) {
+    errors.value.email = "Email is required";
+    return;
+  }
+
+  if (!password.value) {
+    errors.value.password = "Password is required";
+    return;
+  }
+
+  // Email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.value)) {
+    errors.value.email = "Please enter a valid email address";
+    return;
+  }
+
+  isLoading.value = true;
+
+  try {
+    const response = await apiService.login({
+      email: email.value,
+      password: password.value,
+    });
+
+    if (response.success && response.data) {
+      // Update store with user data
+      store.user = response.data.user;
+      store.isLoggedIn = true;
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+
+      // Redirect to home
+      router.push("/");
+    } else {
+      errorMessage.value =
+        response.message || "Login failed. Please try again.";
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+
+    // Handle validation errors from backend
+    if (error.response && error.response.errors) {
+      // Map validation errors to form fields
+      error.response.errors.forEach((err) => {
+        if (err.path === "email") {
+          errors.value.email = err.msg;
+        } else if (err.path === "password") {
+          errors.value.password = err.msg;
+        }
+      });
+      errorMessage.value = "Please fix the errors above.";
+    } else if (error.message && error.message.includes("Invalid")) {
+      errorMessage.value = "Invalid email or password. Please try again.";
+    } else {
+      errorMessage.value =
+        error.message || "An error occurred. Please try again later.";
+    }
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>

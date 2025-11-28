@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { dbGet } from "../config/database.js";
+import User from "../models/User.js";
 
 // Middleware to verify JWT token
 export const authenticateToken = async (req, res, next) => {
@@ -20,9 +20,8 @@ export const authenticateToken = async (req, res, next) => {
     );
 
     // Get user from database
-    const user = await dbGet(
-      "SELECT id, name, email, role FROM users WHERE id = ?",
-      [decoded.userId]
+    const user = await User.findById(decoded.userId).select(
+      "_id name email role"
     );
 
     if (!user) {
@@ -32,7 +31,13 @@ export const authenticateToken = async (req, res, next) => {
       });
     }
 
-    req.user = user;
+    // Convert _id to id for consistency
+    req.user = {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
     next();
   } catch (error) {
     if (error.name === "JsonWebTokenError") {
@@ -90,13 +95,17 @@ export const optionalAuth = async (req, res, next) => {
         token,
         process.env.JWT_SECRET || "fallback-secret"
       );
-      const user = await dbGet(
-        "SELECT id, name, email, role FROM users WHERE id = ?",
-        [decoded.userId]
+      const user = await User.findById(decoded.userId).select(
+        "_id name email role"
       );
 
       if (user) {
-        req.user = user;
+        req.user = {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        };
       }
     }
 

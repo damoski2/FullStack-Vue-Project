@@ -398,32 +398,29 @@ export const store = reactive({
   },
 
   // User methods
-  login(email, password) {
-    // Simulate login
-    this.user = {
-      name: email.split("@")[0],
-      email: email,
-      role: "parent", // or 'student'
-    };
+  setUser(userData) {
+    this.user = userData;
     this.isLoggedIn = true;
-    localStorage.setItem("user", JSON.stringify(this.user));
+    localStorage.setItem("user", JSON.stringify(userData));
   },
 
-  logout() {
-    this.user = null;
-    this.isLoggedIn = false;
-    localStorage.removeItem("user");
-  },
-
-  register(name, email, password, role = "parent") {
-    // Simulate registration
-    this.user = {
-      name: name,
-      email: email,
-      role: role,
-    };
-    this.isLoggedIn = true;
-    localStorage.setItem("user", JSON.stringify(this.user));
+  async logout() {
+    try {
+      // Call API logout if token exists
+      const token = localStorage.getItem("token");
+      if (token) {
+        // Import apiService dynamically to avoid circular dependency
+        const apiService = (await import("../services/api.js")).default;
+        await apiService.logout();
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      this.user = null;
+      this.isLoggedIn = false;
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+    }
   },
 
   // Persistence
@@ -438,12 +435,41 @@ export const store = reactive({
     }
   },
 
-  loadUser() {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      this.user = JSON.parse(savedUser);
-      this.isLoggedIn = true;
+  async loadUser() {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        // Import apiService dynamically to avoid circular dependency
+        const apiService = (await import("../services/api.js")).default;
+        const response = await apiService.getCurrentUser();
+        if (response.success && response.data.user) {
+          this.user = response.data.user;
+          this.isLoggedIn = true;
+          localStorage.setItem("user", JSON.stringify(response.data.user));
+        } else {
+          // Token might be invalid, clear it
+          this.clearAuth();
+        }
+      } catch (error) {
+        console.error("Failed to load user:", error);
+        // Token might be invalid, clear it
+        this.clearAuth();
+      }
+    } else {
+      // Try to load from localStorage as fallback
+      const savedUser = localStorage.getItem("user");
+      if (savedUser) {
+        this.user = JSON.parse(savedUser);
+        this.isLoggedIn = true;
+      }
     }
+  },
+
+  clearAuth() {
+    this.user = null;
+    this.isLoggedIn = false;
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
   },
 
   init() {

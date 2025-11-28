@@ -15,7 +15,6 @@ import userRoutes from "./routes/users.js";
 
 // Import middleware
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
-import { initDatabase } from "./config/database.js";
 import { connectMongo } from "./config/mongo.js";
 
 // Load environment variables
@@ -77,12 +76,8 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
-    // Prefer MongoDB if configured; otherwise fall back to SQLite
-    if (process.env.MONGO_URI) {
-      await connectMongo();
-    } else {
-      await initDatabase();
-    }
+    // Connect to MongoDB
+    await connectMongo();
 
     app.listen(PORT, () => {
       console.log(`🚀 AfterSchool Hub API server running on port ${PORT}`);

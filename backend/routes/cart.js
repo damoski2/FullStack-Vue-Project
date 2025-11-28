@@ -1,6 +1,9 @@
 import express from "express";
 import { body, validationResult } from "express-validator";
-import { dbQuery, dbGet, dbRun } from "../config/database.js";
+import CartItem from "../models/CartItem.js";
+import Lesson from "../models/Lesson.js";
+import Category from "../models/Category.js";
+import Teacher from "../models/Teacher.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -10,34 +13,40 @@ const router = express.Router();
 // @access  Private
 router.get("/", authenticateToken, async (req, res) => {
   try {
-    const cartItems = await dbQuery(
-      `
-      SELECT 
-        ci.*,
-        l.title,
-        l.price,
-        l.price_unit,
-        l.duration,
-        l.schedule,
-        l.age_group,
-        l.image,
-        l.description,
-        c.name as category_name,
-        t.name as teacher_name,
-        t.title as teacher_title,
-        t.avatar as teacher_avatar
-      FROM cart_items ci
-      LEFT JOIN lessons l ON ci.lesson_id = l.id
-      LEFT JOIN categories c ON l.category_id = c.id
-      LEFT JOIN teachers t ON l.teacher_id = t.id
-      WHERE ci.user_id = ?
-      ORDER BY ci.created_at DESC
-    `,
-      [req.user.id]
-    );
+    const cartItems = await CartItem.find({ user_id: req.user.id })
+      .populate({
+        path: "lesson_id",
+        populate: [
+          { path: "category_id", select: "name" },
+          { path: "teacher_id", select: "name title avatar" },
+        ],
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Transform cart items
+    const transformedItems = cartItems.map((item) => ({
+      id: item._id.toString(),
+      user_id: item.user_id.toString(),
+      lesson_id: item.lesson_id?._id.toString(),
+      quantity: item.quantity,
+      title: item.lesson_id?.title,
+      price: item.lesson_id?.price,
+      price_unit: item.lesson_id?.price_unit,
+      duration: item.lesson_id?.duration,
+      schedule: item.lesson_id?.schedule,
+      age_group: item.lesson_id?.age_group,
+      image: item.lesson_id?.image,
+      description: item.lesson_id?.description,
+      category_name: item.lesson_id?.category_id?.name,
+      teacher_name: item.lesson_id?.teacher_id?.name,
+      teacher_title: item.lesson_id?.teacher_id?.title,
+      teacher_avatar: item.lesson_id?.teacher_id?.avatar,
+      created_at: item.createdAt,
+    }));
 
     // Calculate totals
-    const subtotal = cartItems.reduce((total, item) => {
+    const subtotal = transformedItems.reduce((total, item) => {
       return total + item.price * item.quantity;
     }, 0);
 
@@ -47,12 +56,12 @@ router.get("/", authenticateToken, async (req, res) => {
     res.json({
       success: true,
       data: {
-        items: cartItems,
+        items: transformedItems,
         summary: {
           subtotal: parseFloat(subtotal.toFixed(2)),
           tax: parseFloat(tax.toFixed(2)),
           total: parseFloat(total.toFixed(2)),
-          itemCount: cartItems.reduce(
+          itemCount: transformedItems.reduce(
             (count, item) => count + item.quantity,
             0
           ),
@@ -96,14 +105,10 @@ router.post(
       const { lesson_id, quantity = 1 } = req.body;
 
       // Check if lesson exists and is available
-      const lesson = await dbGet(
-        `
-      SELECT id, title, price, available, max_students, students_enrolled
-      FROM lessons 
-      WHERE id = ? AND available = 1
-    `,
-        [lesson_id]
-      );
+      const lesson = await Lesson.findOne({
+        _id: lesson_id,
+        available: true,
+      }).select("title price available max_students students_enrolled");
 
       if (!lesson) {
         return res.status(404).json({
@@ -123,10 +128,10 @@ router.post(
       }
 
       // Check if item already exists in cart
-      const existingItem = await dbGet(
-        "SELECT * FROM cart_items WHERE user_id = ? AND lesson_id = ?",
-        [req.user.id, lesson_id]
-      );
+      const existingItem = await CartItem.findOne({
+        user_id: req.user.id,
+        lesson_id: lesson_id,
+      });
 
       if (existingItem) {
         // Update quantity
@@ -142,10 +147,8 @@ router.post(
           });
         }
 
-        await dbRun(
-          "UPDATE cart_items SET quantity = ? WHERE user_id = ? AND lesson_id = ?",
-          [newQuantity, req.user.id, lesson_id]
-        );
+        existingItem.quantity = newQuantity;
+        await existingItem.save();
 
         res.json({
           success: true,
@@ -154,10 +157,11 @@ router.post(
         });
       } else {
         // Add new item to cart
-        await dbRun(
-          "INSERT INTO cart_items (user_id, lesson_id, quantity) VALUES (?, ?, ?)",
-          [req.user.id, lesson_id, quantity]
-        );
+        await CartItem.create({
+          user_id: req.user.id,
+          lesson_id: lesson_id,
+          quantity,
+        });
 
         res.status(201).json({
           success: true,
@@ -182,7 +186,7 @@ router.put(
   "/update",
   authenticateToken,
   [
-    body("lesson_id").isInt().withMessage("Lesson ID must be a valid integer"),
+    body("lesson_id").notEmpty().withMessage("Lesson ID is required"),
     body("quantity")
       .isInt({ min: 1 })
       .withMessage("Quantity must be a positive integer"),
@@ -202,14 +206,10 @@ router.put(
       const { lesson_id, quantity } = req.body;
 
       // Check if lesson exists and is available
-      const lesson = await dbGet(
-        `
-      SELECT id, title, available, max_students, students_enrolled
-      FROM lessons 
-      WHERE id = ? AND available = 1
-    `,
-        [lesson_id]
-      );
+      const lesson = await Lesson.findOne({
+        _id: lesson_id,
+        available: true,
+      }).select("title available max_students students_enrolled");
 
       if (!lesson) {
         return res.status(404).json({
@@ -229,10 +229,10 @@ router.put(
       }
 
       // Check if item exists in cart
-      const existingItem = await dbGet(
-        "SELECT * FROM cart_items WHERE user_id = ? AND lesson_id = ?",
-        [req.user.id, lesson_id]
-      );
+      const existingItem = await CartItem.findOne({
+        user_id: req.user.id,
+        lesson_id: lesson_id,
+      });
 
       if (!existingItem) {
         return res.status(404).json({
@@ -242,10 +242,8 @@ router.put(
       }
 
       // Update quantity
-      await dbRun(
-        "UPDATE cart_items SET quantity = ? WHERE user_id = ? AND lesson_id = ?",
-        [quantity, req.user.id, lesson_id]
-      );
+      existingItem.quantity = quantity;
+      await existingItem.save();
 
       res.json({
         success: true,
@@ -268,7 +266,7 @@ router.put(
 router.delete(
   "/remove",
   authenticateToken,
-  [body("lesson_id").isInt().withMessage("Lesson ID must be a valid integer")],
+  [body("lesson_id").notEmpty().withMessage("Lesson ID is required")],
   async (req, res) => {
     try {
       // Check validation errors
@@ -284,10 +282,10 @@ router.delete(
       const { lesson_id } = req.body;
 
       // Check if item exists in cart
-      const existingItem = await dbGet(
-        "SELECT ci.*, l.title FROM cart_items ci LEFT JOIN lessons l ON ci.lesson_id = l.id WHERE ci.user_id = ? AND ci.lesson_id = ?",
-        [req.user.id, lesson_id]
-      );
+      const existingItem = await CartItem.findOne({
+        user_id: req.user.id,
+        lesson_id: lesson_id,
+      }).populate("lesson_id", "title");
 
       if (!existingItem) {
         return res.status(404).json({
@@ -296,15 +294,17 @@ router.delete(
         });
       }
 
+      const title = existingItem.lesson_id?.title || "Item";
+
       // Remove item from cart
-      await dbRun(
-        "DELETE FROM cart_items WHERE user_id = ? AND lesson_id = ?",
-        [req.user.id, lesson_id]
-      );
+      await CartItem.deleteOne({
+        user_id: req.user.id,
+        lesson_id: lesson_id,
+      });
 
       res.json({
         success: true,
-        message: `${existingItem.title} removed from cart`,
+        message: `${title} removed from cart`,
       });
     } catch (error) {
       console.error("Remove from cart error:", error);
@@ -321,7 +321,7 @@ router.delete(
 // @access  Private
 router.delete("/clear", authenticateToken, async (req, res) => {
   try {
-    await dbRun("DELETE FROM cart_items WHERE user_id = ?", [req.user.id]);
+    await CartItem.deleteMany({ user_id: req.user.id });
 
     res.json({
       success: true,
@@ -341,12 +341,8 @@ router.delete("/clear", authenticateToken, async (req, res) => {
 // @access  Private
 router.get("/count", authenticateToken, async (req, res) => {
   try {
-    const result = await dbGet(
-      "SELECT SUM(quantity) as count FROM cart_items WHERE user_id = ?",
-      [req.user.id]
-    );
-
-    const count = result.count || 0;
+    const items = await CartItem.find({ user_id: req.user.id });
+    const count = items.reduce((sum, item) => sum + item.quantity, 0);
 
     res.json({
       success: true,
