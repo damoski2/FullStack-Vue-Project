@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 let isConnected = false;
 
 export const connectMongo = async () => {
-  const mongoUri = process.env.MONGO_URI;
+  const mongoUri = process.env.MONGO_URI || "mongodb+srv://akogunoyindamola42_db_user:damodami43@cluster0.9dkiijj.mongodb.net/AFTER-SCHOOL-HUB-API?appName=Cluster0";
   if (!mongoUri) {
     throw new Error("MONGO_URI is not set in environment variables");
   }
