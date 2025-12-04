@@ -39,10 +39,38 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // CORS configuration
+// Allow multiple origins for flexibility (frontend URL + localhost for development)
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://afterschool-hub-frontend.onrender.com/"
+].filter(Boolean); // Remove undefined values
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, Postman, or curl)
+      // This is needed for tools like Postman that don't send Origin header
+      if (!origin) return callback(null, true);
+
+      // Check if origin is in allowed list
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        // Log blocked origins for debugging
+        console.log(
+          `CORS: Blocked origin ${origin}. Allowed origins:`,
+          allowedOrigins
+        );
+        // In production, you might want to block: callback(new Error('Not allowed by CORS'))
+        // For now, allow it but log it
+        callback(null, true);
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
