@@ -14,9 +14,13 @@
 3. Settings:
    - **Name:** `afterschool-hub-backend`
    - **Root Directory:** `backend`
-   - **Build Command:** `npm install`
+   - **Build Command:** `npm install` (NOT `npm run build` - backend has no build script!)
    - **Start Command:** `npm start`
    - **Health Check Path:** `/health`
+   
+   **If Root Directory is empty/root, use:**
+   - **Build Command:** `cd backend && npm install`
+   - **Start Command:** `cd backend && npm start`
 4. Environment Variables:
    ```
    NODE_ENV=production
@@ -32,6 +36,11 @@
 2. Connect repository
 3. Settings:
    - **Name:** `afterschool-hub-frontend`
+   - **Root Directory:** (leave empty or set to root)
+   - **Build Command:** `cd frontend && npm install && npm run build`
+   - **Publish Directory:** `frontend/dist`
+   
+   **OR if Root Directory is set to `frontend`:**
    - **Root Directory:** `frontend`
    - **Build Command:** `npm install && npm run build`
    - **Publish Directory:** `dist`

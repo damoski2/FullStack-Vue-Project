@@ -45,6 +45,16 @@ You'll deploy two separate services on Render:
    Build Command: npm install
    Start Command: npm start
    ```
+   
+   **IMPORTANT:** 
+   - If Root Directory is set to `backend`, use:
+     - Build Command: `npm install`
+     - Start Command: `npm start`
+   - If Root Directory is empty/root, use:
+     - Build Command: `cd backend && npm install`
+     - Start Command: `cd backend && npm start`
+   
+   **DO NOT** include `npm run build` - the backend doesn't have a build script!
 
 3. **Set Environment Variables:**
    Click "Environment" tab and add:
@@ -78,8 +88,20 @@ You'll deploy two separate services on Render:
    Name: afterschool-hub-frontend
    Branch: main (or your main branch)
    Root Directory: frontend
+   Build Command: cd frontend && npm install && npm run build
+   Publish Directory: frontend/dist
+   ```
+   
+   **IMPORTANT:** If Root Directory is set to `frontend`, use:
+   ```
    Build Command: npm install && npm run build
    Publish Directory: dist
+   ```
+   
+   If Root Directory is empty/root, use:
+   ```
+   Build Command: cd frontend && npm install && npm run build
+   Publish Directory: frontend/dist
    ```
 
 3. **Set Environment Variables:**
