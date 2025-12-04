@@ -24,30 +24,34 @@ router.get("/", authenticateToken, async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Transform cart items
-    const transformedItems = cartItems.map((item) => ({
-      id: item._id.toString(),
-      user_id: item.user_id.toString(),
-      lesson_id: item.lesson_id?._id.toString(),
-      quantity: item.quantity,
-      title: item.lesson_id?.title,
-      price: item.lesson_id?.price,
-      price_unit: item.lesson_id?.price_unit,
-      duration: item.lesson_id?.duration,
-      schedule: item.lesson_id?.schedule,
-      age_group: item.lesson_id?.age_group,
-      image: item.lesson_id?.image,
-      description: item.lesson_id?.description,
-      category_name: item.lesson_id?.category_id?.name,
-      teacher_name: item.lesson_id?.teacher_id?.name,
-      teacher_title: item.lesson_id?.teacher_id?.title,
-      teacher_avatar: item.lesson_id?.teacher_id?.avatar,
-      created_at: item.createdAt,
-    }));
+    // Transform cart items and filter out items with missing lessons
+    const transformedItems = cartItems
+      .filter((item) => item.lesson_id != null)
+      .map((item) => ({
+        id: item._id.toString(),
+        user_id: item.user_id.toString(),
+        lesson_id: item.lesson_id._id.toString(),
+        quantity: item.quantity,
+        title: item.lesson_id?.title,
+        price: item.lesson_id?.price || 0,
+        price_unit: item.lesson_id?.price_unit,
+        duration: item.lesson_id?.duration,
+        schedule: item.lesson_id?.schedule,
+        age_group: item.lesson_id?.age_group,
+        image: item.lesson_id?.image,
+        description: item.lesson_id?.description,
+        category_name: item.lesson_id?.category_id?.name,
+        teacher_name: item.lesson_id?.teacher_id?.name,
+        teacher_title: item.lesson_id?.teacher_id?.title,
+        teacher_avatar: item.lesson_id?.teacher_id?.avatar,
+        created_at: item.createdAt,
+      }));
 
-    // Calculate totals
+    // Calculate totals (with null safety)
     const subtotal = transformedItems.reduce((total, item) => {
-      return total + item.price * item.quantity;
+      const price = item.price || 0;
+      const quantity = item.quantity || 0;
+      return total + price * quantity;
     }, 0);
 
     const tax = subtotal * 0.1; // 10% tax

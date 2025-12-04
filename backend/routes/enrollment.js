@@ -76,7 +76,10 @@ router.post(
 
       // Get user's cart items
       const cartItems = await CartItem.find({ user_id: req.user.id })
-        .populate("lesson_id", "title price price_unit max_students students_enrolled available")
+        .populate(
+          "lesson_id",
+          "title price price_unit max_students students_enrolled available"
+        )
         .lean();
 
       if (cartItems.length === 0) {
@@ -86,8 +89,19 @@ router.post(
         });
       }
 
+      // Filter out items with missing lessons first
+      const validCartItems = cartItems.filter((item) => item.lesson_id != null);
+
+      if (validCartItems.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Cart contains invalid items. Please remove them and try again.",
+        });
+      }
+
       // Validate all cart items
-      for (const item of cartItems) {
+      for (const item of validCartItems) {
         const lesson = item.lesson_id;
         if (!lesson) {
           return res.status(400).json({
@@ -112,8 +126,10 @@ router.post(
       }
 
       // Calculate totals
-      const subtotal = cartItems.reduce((total, item) => {
-        return total + item.lesson_id.price * item.quantity;
+      const subtotal = validCartItems.reduce((total, item) => {
+        const price = item.lesson_id?.price || 0;
+        const quantity = item.quantity || 0;
+        return total + price * quantity;
       }, 0);
 
       const tax = subtotal * 0.1; // 10% tax
@@ -125,7 +141,7 @@ router.post(
       // Process enrollments
       const enrollments = [];
 
-      for (const item of cartItems) {
+      for (const item of validCartItems) {
         const lesson = item.lesson_id;
         // Create enrollment record
         const enrollment = await Enrollment.create({
@@ -396,11 +412,18 @@ router.get("/summary", authenticateToken, async (req, res) => {
 
     const summary = {
       total_enrollments: enrollments.length,
-      confirmed_enrollments: enrollments.filter((e) => e.status === "confirmed").length,
-      pending_enrollments: enrollments.filter((e) => e.status === "pending").length,
-      cancelled_enrollments: enrollments.filter((e) => e.status === "cancelled").length,
-      completed_enrollments: enrollments.filter((e) => e.status === "completed").length,
-      total_spent: enrollments.reduce((sum, e) => sum + (e.total_amount || 0), 0),
+      confirmed_enrollments: enrollments.filter((e) => e.status === "confirmed")
+        .length,
+      pending_enrollments: enrollments.filter((e) => e.status === "pending")
+        .length,
+      cancelled_enrollments: enrollments.filter((e) => e.status === "cancelled")
+        .length,
+      completed_enrollments: enrollments.filter((e) => e.status === "completed")
+        .length,
+      total_spent: enrollments.reduce(
+        (sum, e) => sum + (e.total_amount || 0),
+        0
+      ),
     };
 
     res.json({

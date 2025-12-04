@@ -508,6 +508,25 @@ router.post(
         });
       }
 
+      // Security: If user is a teacher (not admin), they can only create lessons with their own teacher_id
+      if (req.user.role === "teacher") {
+        const userTeacher = await Teacher.findOne({ user_id: req.user.id });
+        if (!userTeacher) {
+          return res.status(403).json({
+            success: false,
+            message:
+              "Teacher profile not found. Please create your teacher profile first.",
+          });
+        }
+        if (teacher._id.toString() !== userTeacher._id.toString()) {
+          return res.status(403).json({
+            success: false,
+            message:
+              "You can only create lessons with your own teacher profile",
+          });
+        }
+      }
+
       // Handle image upload
       let imageUrl = null;
       if (req.file) {
@@ -618,6 +637,25 @@ router.put(
         });
       }
 
+      // Security: If user is a teacher (not admin), they can only update their own lessons
+      if (req.user.role === "teacher") {
+        const userTeacher = await Teacher.findOne({ user_id: req.user.id });
+        if (!userTeacher) {
+          return res.status(403).json({
+            success: false,
+            message: "Teacher profile not found",
+          });
+        }
+        if (
+          existingLesson.teacher_id.toString() !== userTeacher._id.toString()
+        ) {
+          return res.status(403).json({
+            success: false,
+            message: "You can only update your own lessons",
+          });
+        }
+      }
+
       // Check validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -653,7 +691,16 @@ router.put(
       if (subject) updateData.subject = subject;
       if (location) updateData.location = location;
       if (category_id) updateData.category_id = category_id;
-      if (teacher_id) updateData.teacher_id = teacher_id;
+      if (teacher_id) {
+        // Security: If user is a teacher (not admin), they cannot change teacher_id
+        if (req.user.role === "teacher") {
+          return res.status(403).json({
+            success: false,
+            message: "You cannot change the teacher for a lesson",
+          });
+        }
+        updateData.teacher_id = teacher_id;
+      }
       if (price !== undefined) updateData.price = price;
       if (price_unit) updateData.price_unit = price_unit;
       if (duration) updateData.duration = duration;

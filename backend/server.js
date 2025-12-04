@@ -44,7 +44,7 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   "http://localhost:5173",
   "http://localhost:3000",
-  "https://afterschool-hub-frontend.onrender.com/"
+  "https://afterschool-hub-frontend.onrender.com",
 ].filter(Boolean); // Remove undefined values
 
 app.use(
@@ -55,7 +55,7 @@ app.use(
       if (!origin) return callback(null, true);
 
       // Check if origin is in allowed list
-      if (allowedOrigins.indexOf(origin) !== -1) {
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         // Log blocked origins for debugging
