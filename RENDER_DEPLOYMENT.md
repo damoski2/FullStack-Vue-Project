@@ -88,21 +88,19 @@ You'll deploy two separate services on Render:
    Name: afterschool-hub-frontend
    Branch: main (or your main branch)
    Root Directory: frontend
-   Build Command: cd frontend && npm install && npm run build
-   Publish Directory: frontend/dist
-   ```
-   
-   **IMPORTANT:** If Root Directory is set to `frontend`, use:
-   ```
    Build Command: npm install && npm run build
    Publish Directory: dist
    ```
    
-   If Root Directory is empty/root, use:
-   ```
-   Build Command: cd frontend && npm install && npm run build
-   Publish Directory: frontend/dist
-   ```
+   **IMPORTANT:** 
+   - **If Root Directory is set to `frontend`** (recommended):
+     - Build Command: `npm install && npm run build`
+     - Publish Directory: `dist`
+     - Do NOT include `cd frontend` in the build command!
+   
+   - **If Root Directory is empty/root:**
+     - Build Command: `cd frontend && npm install && npm run build`
+     - Publish Directory: `frontend/dist`
 
 3. **Set Environment Variables:**
    Click "Environment" tab and add:

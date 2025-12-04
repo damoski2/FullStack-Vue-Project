@@ -27,9 +27,10 @@ services:
     name: afterschool-hub-frontend
     region: oregon  # Change to your preferred region
     plan: free
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/dist
-    # Note: Using cd in buildCommand ensures we're in the right directory
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    rootDir: frontend
+    # Note: rootDir is set to 'frontend', so build commands run from that directory
     routes:
       - type: rewrite
         source: /*

@@ -36,14 +36,14 @@
 2. Connect repository
 3. Settings:
    - **Name:** `afterschool-hub-frontend`
-   - **Root Directory:** (leave empty or set to root)
-   - **Build Command:** `cd frontend && npm install && npm run build`
-   - **Publish Directory:** `frontend/dist`
-   
-   **OR if Root Directory is set to `frontend`:**
-   - **Root Directory:** `frontend`
+   - **Root Directory:** `frontend` ⚠️ IMPORTANT: Set this first!
    - **Build Command:** `npm install && npm run build`
    - **Publish Directory:** `dist`
+   
+   **If Root Directory is NOT set (empty/root), use:**
+   - **Root Directory:** (leave empty)
+   - **Build Command:** `cd frontend && npm install && npm run build`
+   - **Publish Directory:** `frontend/dist`
 4. Environment Variables:
    ```
    VITE_API_BASE_URL=https://your-backend-url.onrender.com/api
