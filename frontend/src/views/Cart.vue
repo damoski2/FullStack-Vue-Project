@@ -2,19 +2,42 @@
   <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-gray-900 mb-8">My Enrollments</h1>
 
+    <!-- Loading State -->
+    <div v-if="isLoading" class="text-center py-16">
+      <div
+        class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"
+      ></div>
+      <p class="text-gray-600">Loading cart...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="text-center py-16">
+      <div
+        class="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto"
+      >
+        <p class="text-red-600 mb-4">{{ error }}</p>
+        <button
+          @click="loadCart"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+
     <!-- Cart Items -->
-    <div v-if="store.cart.length > 0" class="grid lg:grid-cols-3 gap-8">
+    <div v-else-if="cartItems.length > 0" class="grid lg:grid-cols-3 gap-8">
       <!-- Cart Items List -->
       <div class="lg:col-span-2 space-y-4">
         <div
-          v-for="item in store.cart"
+          v-for="item in cartItems"
           :key="item.id"
           class="bg-white rounded-xl shadow-md p-6 flex flex-col sm:flex-row gap-6"
         >
           <!-- Class Image -->
           <div
             class="w-full sm:w-32 h-32 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
-            @click="goToLesson(item.id)"
+            @click="goToLesson(item.lesson_id)"
           >
             <img
               :src="item.image"
@@ -29,22 +52,28 @@
               <div>
                 <h3
                   class="text-lg font-semibold text-gray-900 cursor-pointer hover:text-indigo-600"
-                  @click="goToLesson(item.id)"
+                  @click="goToLesson(item.lesson_id)"
                 >
                   {{ item.title }}
                 </h3>
-                <p class="text-sm text-gray-500">{{ item.category }}</p>
+                <p class="text-sm text-gray-500">
+                  {{ item.category_name || "Uncategorized" }}
+                </p>
                 <div class="flex items-center gap-2 mt-1">
                   <img
-                    :src="item.teacherAvatar"
-                    :alt="item.teacher"
+                    :src="
+                      item.teacher_avatar || 'https://i.pravatar.cc/150?img=1'
+                    "
+                    :alt="item.teacher_name"
                     class="w-6 h-6 rounded-full"
                   />
-                  <p class="text-sm text-gray-600">{{ item.teacher }}</p>
+                  <p class="text-sm text-gray-600">
+                    {{ item.teacher_name || "Unknown Teacher" }}
+                  </p>
                 </div>
               </div>
               <button
-                @click="removeItem(item.id)"
+                @click="removeItem(item.lesson_id)"
                 class="text-red-500 hover:text-red-700 transition-colors"
               >
                 <svg
@@ -95,7 +124,7 @@
                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                   />
                 </svg>
-                Ages {{ item.ageGroup }}
+                Ages {{ item.age_group }}
               </div>
             </div>
 
@@ -105,7 +134,7 @@
                 class="flex items-center border border-gray-300 rounded-lg overflow-hidden"
               >
                 <button
-                  @click="updateQuantity(item.id, item.quantity - 1)"
+                  @click="updateQuantity(item.lesson_id, item.quantity - 1)"
                   class="px-3 py-1 bg-gray-100 hover:bg-gray-200 transition-colors"
                 >
                   <svg
@@ -126,7 +155,7 @@
                   item.quantity
                 }}</span>
                 <button
-                  @click="updateQuantity(item.id, item.quantity + 1)"
+                  @click="updateQuantity(item.lesson_id, item.quantity + 1)"
                   class="px-3 py-1 bg-gray-100 hover:bg-gray-200 transition-colors"
                 >
                   <svg
@@ -151,7 +180,7 @@
                   >${{ (item.price * item.quantity).toFixed(2) }}</span
                 >
                 <p class="text-xs text-gray-500">
-                  {{ item.quantity }} × ${{ item.price }}/{{ item.priceUnit }}
+                  {{ item.quantity }} × ${{ item.price }}/{{ item.price_unit }}
                 </p>
               </div>
             </div>
@@ -169,11 +198,11 @@
           <div class="space-y-4 mb-6">
             <div class="flex justify-between text-gray-600">
               <span
-                >Subtotal ({{ totalItems }} class{{
-                  totalItems !== 1 ? "es" : ""
+                >Subtotal ({{ cartSummary.itemCount }} class{{
+                  cartSummary.itemCount !== 1 ? "es" : ""
                 }})</span
               >
-              <span>${{ subtotal.toFixed(2) }}</span>
+              <span>${{ cartSummary.subtotal.toFixed(2) }}</span>
             </div>
             <div class="flex justify-between text-gray-600">
               <span>Processing Fee</span>
@@ -181,12 +210,14 @@
             </div>
             <div class="flex justify-between text-gray-600">
               <span>Tax (estimated)</span>
-              <span>${{ tax.toFixed(2) }}</span>
+              <span>${{ cartSummary.tax.toFixed(2) }}</span>
             </div>
             <div class="border-t pt-4">
               <div class="flex justify-between text-lg font-bold text-gray-900">
                 <span>Total</span>
-                <span class="text-indigo-600">${{ total.toFixed(2) }}</span>
+                <span class="text-indigo-600"
+                  >${{ cartSummary.total.toFixed(2) }}</span
+                >
               </div>
             </div>
           </div>
@@ -241,28 +272,293 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import store from "../store";
+import apiService from "../services/api.js";
 
 const router = useRouter();
+const cartItems = ref([]);
+const cartSummary = ref({
+  subtotal: 0,
+  tax: 0,
+  total: 0,
+  itemCount: 0,
+});
+const isLoading = ref(true);
+const error = ref(null);
 
-const totalItems = computed(() => store.getCartCount());
-const subtotal = computed(() => store.getCartTotal());
-const tax = computed(() => subtotal.value * 0.1); // 10% tax
-const total = computed(() => subtotal.value + tax.value);
+// Transform API cart item to match frontend format
+const transformCartItem = (item) => {
+  return {
+    id: item.id,
+    lesson_id: item.lesson_id,
+    quantity: item.quantity,
+    title: item.title,
+    price: item.price,
+    price_unit: item.price_unit,
+    duration: item.duration,
+    schedule: item.schedule,
+    age_group: item.age_group,
+    image:
+      item.image ||
+      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&q=80",
+    category_name: item.category_name,
+    teacher_name: item.teacher_name,
+    teacher_avatar: item.teacher_avatar || "https://i.pravatar.cc/150?img=1",
+    teacher_title: item.teacher_title,
+  };
+};
 
-const updateQuantity = (lessonId, newQuantity) => {
-  if (newQuantity <= 0) {
-    removeItem(lessonId);
-  } else {
-    store.updateQuantity(lessonId, newQuantity);
+const loadCart = async () => {
+  isLoading.value = true;
+  error.value = null;
+
+  // First, load from localStorage
+  const localCartItems = store.loadCartItems();
+
+  // If not logged in, use localStorage only
+  if (!store.isLoggedIn) {
+    if (localCartItems.length === 0) {
+      cartItems.value = [];
+      cartSummary.value = {
+        subtotal: 0,
+        tax: 0,
+        total: 0,
+        itemCount: 0,
+      };
+      isLoading.value = false;
+      return;
+    }
+
+    // Load lesson details for localStorage items
+    try {
+      const lessonPromises = localCartItems.map(async (item) => {
+        try {
+          const response = await apiService.getLesson(item.lesson_id);
+          if (response.success && response.data && response.data.lesson) {
+            const lesson = response.data.lesson;
+            return {
+              id: item.lesson_id,
+              lesson_id: item.lesson_id,
+              quantity: item.quantity,
+              title: lesson.title,
+              price: lesson.price,
+              price_unit: lesson.price_unit,
+              duration: lesson.duration,
+              schedule: lesson.schedule,
+              age_group: lesson.age_group,
+              image:
+                lesson.image ||
+                "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&q=80",
+              category_name: lesson.category_name,
+              teacher_name: lesson.teacher_name,
+              teacher_avatar:
+                lesson.teacher_avatar || "https://i.pravatar.cc/150?img=1",
+              teacher_title: lesson.teacher_title,
+            };
+          }
+        } catch (err) {
+          console.error(`Error loading lesson ${item.lesson_id}:`, err);
+          return null;
+        }
+      });
+
+      const loadedItems = (await Promise.all(lessonPromises)).filter(Boolean);
+      cartItems.value = loadedItems;
+
+      // Calculate summary
+      const subtotal = loadedItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
+      const tax = subtotal * 0.1;
+      const total = subtotal + tax;
+      const itemCount = loadedItems.reduce(
+        (count, item) => count + item.quantity,
+        0
+      );
+
+      cartSummary.value = {
+        subtotal: parseFloat(subtotal.toFixed(2)),
+        tax: parseFloat(tax.toFixed(2)),
+        total: parseFloat(total.toFixed(2)),
+        itemCount: itemCount,
+      };
+    } catch (err) {
+      console.error("Error loading cart from localStorage:", err);
+      cartItems.value = [];
+      cartSummary.value = {
+        subtotal: 0,
+        tax: 0,
+        total: 0,
+        itemCount: 0,
+      };
+    }
+    isLoading.value = false;
+    return;
+  }
+
+  // If logged in, try to load from API, fallback to localStorage
+  try {
+    const response = await apiService.getCart();
+    if (response.success && response.data) {
+      cartItems.value = response.data.items.map(transformCartItem);
+      cartSummary.value = response.data.summary || {
+        subtotal: 0,
+        tax: 0,
+        total: 0,
+        itemCount: 0,
+      };
+      // Sync localStorage with API data
+      const apiItems = response.data.items.map((item) => ({
+        lesson_id: item.lesson_id,
+        quantity: item.quantity,
+      }));
+      store.saveCartItems(apiItems);
+    } else {
+      // Fallback to localStorage
+      await loadCartFromLocalStorage();
+    }
+  } catch (err) {
+    console.error("Error loading cart from API:", err);
+    // Fallback to localStorage
+    await loadCartFromLocalStorage();
+  } finally {
+    isLoading.value = false;
   }
 };
 
-const removeItem = (lessonId) => {
-  if (confirm("Are you sure you want to remove this class from your cart?")) {
-    store.removeFromCart(lessonId);
+const loadCartFromLocalStorage = async () => {
+  const localCartItems = store.loadCartItems();
+
+  if (localCartItems.length === 0) {
+    cartItems.value = [];
+    cartSummary.value = {
+      subtotal: 0,
+      tax: 0,
+      total: 0,
+      itemCount: 0,
+    };
+    return;
+  }
+
+  // Load lesson details for localStorage items
+  try {
+    const lessonPromises = localCartItems.map(async (item) => {
+      try {
+        const response = await apiService.getLesson(item.lesson_id);
+        if (response.success && response.data && response.data.lesson) {
+          const lesson = response.data.lesson;
+          return {
+            id: item.lesson_id,
+            lesson_id: item.lesson_id,
+            quantity: item.quantity,
+            title: lesson.title,
+            price: lesson.price,
+            price_unit: lesson.price_unit,
+            duration: lesson.duration,
+            schedule: lesson.schedule,
+            age_group: lesson.age_group,
+            image:
+              lesson.image ||
+              "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&q=80",
+            category_name: lesson.category_name,
+            teacher_name: lesson.teacher_name,
+            teacher_avatar:
+              lesson.teacher_avatar || "https://i.pravatar.cc/150?img=1",
+            teacher_title: lesson.teacher_title,
+          };
+        }
+      } catch (err) {
+        console.error(`Error loading lesson ${item.lesson_id}:`, err);
+        return null;
+      }
+    });
+
+    const loadedItems = (await Promise.all(lessonPromises)).filter(Boolean);
+    cartItems.value = loadedItems;
+
+    // Calculate summary
+    const subtotal = loadedItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+    const tax = subtotal * 0.1;
+    const total = subtotal + tax;
+    const itemCount = loadedItems.reduce(
+      (count, item) => count + item.quantity,
+      0
+    );
+
+    cartSummary.value = {
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      tax: parseFloat(tax.toFixed(2)),
+      total: parseFloat(total.toFixed(2)),
+      itemCount: itemCount,
+    };
+  } catch (err) {
+    console.error("Error loading cart from localStorage:", err);
+    cartItems.value = [];
+    cartSummary.value = {
+      subtotal: 0,
+      tax: 0,
+      total: 0,
+      itemCount: 0,
+    };
+  }
+};
+
+const updateQuantity = async (lessonId, newQuantity) => {
+  if (newQuantity <= 0) {
+    removeItem(lessonId);
+    return;
+  }
+
+  try {
+    // Update localStorage first
+    store.updateLocalCartQuantity(lessonId, newQuantity);
+
+    // If logged in, sync with API
+    if (store.isLoggedIn) {
+      try {
+        await apiService.updateCartItem(lessonId, newQuantity);
+      } catch (apiErr) {
+        console.error("Error syncing quantity with API:", apiErr);
+        // Continue anyway - localStorage already updated
+      }
+    }
+
+    await loadCart(); // Reload cart to get updated data
+  } catch (err) {
+    console.error("Error updating cart:", err);
+    alert("Failed to update quantity. Please try again.");
+  }
+};
+
+const removeItem = async (lessonId) => {
+  if (!confirm("Are you sure you want to remove this class from your cart?")) {
+    return;
+  }
+
+  try {
+    // Remove from localStorage first
+    store.removeFromLocalCart(lessonId);
+
+    // If logged in, sync with API
+    if (store.isLoggedIn) {
+      try {
+        await apiService.removeFromCart(lessonId);
+      } catch (apiErr) {
+        console.error("Error syncing removal with API:", apiErr);
+        // Continue anyway - localStorage already updated
+      }
+    }
+
+    await loadCart(); // Reload cart after removal
+  } catch (err) {
+    console.error("Error removing from cart:", err);
+    alert("Failed to remove item. Please try again.");
   }
 };
 
@@ -271,6 +567,33 @@ const goToLesson = (id) => {
 };
 
 const goToCheckout = () => {
+  if (cartItems.value.length === 0) {
+    alert("Your cart is empty. Add some classes first!");
+    return;
+  }
   router.push("/checkout");
 };
+
+onMounted(() => {
+  // Check if user is logged in
+  const token = localStorage.getItem("token");
+  const user =
+    store.user ||
+    (localStorage.getItem("user")
+      ? JSON.parse(localStorage.getItem("user"))
+      : null);
+
+  if (!token || !user) {
+    // User is not logged in, redirect to login
+    router.push("/login");
+    return;
+  }
+
+  // Ensure user data is loaded
+  if (!store.isLoggedIn && token) {
+    store.loadUser();
+  }
+
+  loadCart();
+});
 </script>

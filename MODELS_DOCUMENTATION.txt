@@ -1,0 +1,325 @@
+================================================================================
+                    DATABASE MODELS DOCUMENTATION
+                    AfterSchool Hub - Field Specifications
+================================================================================
+
+This document outlines all fields required for each model in the database,
+including their data types, constraints, and requirements.
+
+================================================================================
+1. USER MODEL
+================================================================================
+
+Field Name          | Type              | Required | Constraints/Notes
+--------------------|-------------------|----------|----------------------------------
+_id                 | ObjectId          | Auto     | MongoDB auto-generated ID
+name                | String            | Yes      | Trimmed, min 2 characters
+email               | String            | Yes      | Unique, lowercase, trimmed
+password            | String            | Yes      | Hashed password
+role                | String            | No       | Enum: ["parent", "student", "teacher", "admin"]
+                                                  Default: "parent"
+phone               | String            | No       | Trimmed
+address             | String            | No       | Trimmed
+city                | String            | No       | Trimmed
+state               | String            | No       | Trimmed
+zip                 | String            | No       | Trimmed
+createdAt           | Date              | Auto     | Auto-generated timestamp
+updatedAt           | Date              | Auto     | Auto-updated timestamp
+
+Required Fields for Registration:
+- name
+- email
+- password
+
+Optional Fields:
+- role (defaults to "parent")
+- phone
+- address
+- city
+- state
+- zip
+
+================================================================================
+2. CATEGORY MODEL
+================================================================================
+
+Field Name          | Type              | Required | Constraints/Notes
+--------------------|-------------------|----------|----------------------------------
+_id                 | ObjectId          | Auto     | MongoDB auto-generated ID
+name                | String            | Yes      | Unique, trimmed
+description         | String            | No       | Trimmed
+icon                | String            | No       | Trimmed (icon URL or identifier)
+createdAt           | Date              | Auto     | Auto-generated timestamp
+updatedAt           | Date              | Auto     | Auto-updated timestamp
+
+Required Fields:
+- name
+
+Optional Fields:
+- description
+- icon
+
+================================================================================
+3. TEACHER MODEL
+================================================================================
+
+Field Name          | Type              | Required | Constraints/Notes
+--------------------|-------------------|----------|----------------------------------
+_id                 | ObjectId          | Auto     | MongoDB auto-generated ID
+name                | String            | Yes      | Trimmed
+title               | String            | Yes      | Trimmed (e.g., "Concert Pianist")
+avatar              | String            | No       | Trimmed (avatar URL)
+bio                 | String            | No       | Trimmed
+credentials         | String            | No       | Trimmed
+experience_years    | Number            | No       | Default: 0
+rating              | Number            | No       | Default: 0, Range: 0-5
+total_reviews       | Number            | No       | Default: 0
+createdAt           | Date              | Auto     | Auto-generated timestamp
+updatedAt           | Date              | Auto     | Auto-updated timestamp
+
+Required Fields:
+- name
+- title
+
+Optional Fields:
+- avatar
+- bio
+- credentials
+- experience_years (defaults to 0)
+- rating (defaults to 0)
+- total_reviews (defaults to 0)
+
+================================================================================
+4. LESSON MODEL
+================================================================================
+
+Field Name          | Type              | Required | Constraints/Notes
+--------------------|-------------------|----------|----------------------------------
+_id                 | ObjectId          | Auto     | MongoDB auto-generated ID
+title               | String            | Yes      | Trimmed
+category_id         | ObjectId          | Yes      | Reference to Category model
+teacher_id          | ObjectId          | Yes      | Reference to Teacher model
+price               | Number            | Yes      | Min: 0
+price_unit          | String            | Yes      | Enum: ["hour", "session", "month"]
+rating              | Number            | No       | Default: 0, Range: 0-5
+reviews             | Number            | No       | Default: 0 (count of reviews)
+duration            | String            | Yes      | (e.g., "1 hour", "2 hours")
+schedule            | String            | Yes      | (e.g., "Mon & Wed, 4:00 PM")
+age_group           | String            | Yes      | (e.g., "8-16", "5-12")
+students_enrolled   | Number            | No       | Default: 0
+max_students        | Number            | No       | Default: 20
+description         | String            | Yes      | Lesson description
+image               | String            | No       | Trimmed (image URL)
+features            | Array[String]     | No       | Default: [] (array of feature strings)
+featured            | Boolean           | No       | Default: false
+available           | Boolean           | No       | Default: true
+createdAt           | Date              | Auto     | Auto-generated timestamp
+updatedAt           | Date              | Auto     | Auto-updated timestamp
+
+Required Fields:
+- title
+- category_id
+- teacher_id
+- price
+- price_unit
+- duration
+- schedule
+- age_group
+- description
+
+Optional Fields:
+- rating (defaults to 0)
+- reviews (defaults to 0)
+- students_enrolled (defaults to 0)
+- max_students (defaults to 20)
+- image
+- features (defaults to empty array)
+- featured (defaults to false)
+- available (defaults to true)
+
+Indexes:
+- category_id
+- teacher_id
+- featured
+- available
+
+================================================================================
+5. CART ITEM MODEL
+================================================================================
+
+Field Name          | Type              | Required | Constraints/Notes
+--------------------|-------------------|----------|----------------------------------
+_id                 | ObjectId          | Auto     | MongoDB auto-generated ID
+user_id             | ObjectId          | Yes      | Reference to User model
+lesson_id           | ObjectId          | Yes      | Reference to Lesson model
+quantity            | Number            | No       | Default: 1, Min: 1
+createdAt           | Date              | Auto     | Auto-generated timestamp
+updatedAt           | Date              | Auto     | Auto-updated timestamp
+
+Required Fields:
+- user_id
+- lesson_id
+
+Optional Fields:
+- quantity (defaults to 1, minimum 1)
+
+Unique Constraint:
+- Combination of (user_id, lesson_id) must be unique
+  (one cart item per user per lesson)
+
+Indexes:
+- user_id
+- lesson_id
+- Unique index on (user_id, lesson_id)
+
+================================================================================
+6. ENROLLMENT MODEL
+================================================================================
+
+Field Name          | Type              | Required | Constraints/Notes
+--------------------|-------------------|----------|----------------------------------
+_id                 | ObjectId          | Auto     | MongoDB auto-generated ID
+user_id             | ObjectId          | Yes      | Reference to User model
+lesson_id           | ObjectId          | Yes      | Reference to Lesson model
+student_name        | String            | Yes      | Trimmed
+student_age         | Number            | Yes      | Range: 3-18
+student_grade       | String            | No       | Trimmed
+special_notes       | String            | No       | Trimmed
+quantity            | Number            | No       | Default: 1, Min: 1
+total_amount        | Number            | Yes      | Min: 0
+status              | String            | No       | Enum: ["pending", "confirmed", 
+                                                  "cancelled", "completed"]
+                                                  Default: "pending"
+payment_status      | String            | No       | Enum: ["pending", "paid", 
+                                                  "failed", "refunded"]
+                                                  Default: "pending"
+payment_method      | String            | No       | Enum: ["card", "paypal", 
+                                                  "bank_transfer"]
+payment_id          | String            | No       | Trimmed (payment transaction ID)
+enrolled_at         | Date              | No       | Default: Date.now
+createdAt           | Date              | Auto     | Auto-generated timestamp
+updatedAt           | Date              | Auto     | Auto-updated timestamp
+
+Required Fields:
+- user_id
+- lesson_id
+- student_name
+- student_age (must be between 3 and 18)
+- total_amount
+
+Optional Fields:
+- student_grade
+- special_notes
+- quantity (defaults to 1, minimum 1)
+- status (defaults to "pending")
+- payment_status (defaults to "pending")
+- payment_method
+- payment_id
+- enrolled_at (defaults to current date)
+
+Indexes:
+- user_id
+- lesson_id
+- status
+
+================================================================================
+7. REVIEW MODEL
+================================================================================
+
+Field Name          | Type              | Required | Constraints/Notes
+--------------------|-------------------|----------|----------------------------------
+_id                 | ObjectId          | Auto     | MongoDB auto-generated ID
+user_id             | ObjectId          | Yes      | Reference to User model
+lesson_id           | ObjectId          | Yes      | Reference to Lesson model
+rating              | Number            | Yes      | Range: 1-5
+comment             | String            | No       | Trimmed
+createdAt           | Date              | Auto     | Auto-generated timestamp
+updatedAt           | Date              | Auto     | Auto-updated timestamp
+
+Required Fields:
+- user_id
+- lesson_id
+- rating (must be between 1 and 5)
+
+Optional Fields:
+- comment
+
+Unique Constraint:
+- Combination of (user_id, lesson_id) must be unique
+  (one review per user per lesson)
+
+Indexes:
+- user_id
+- lesson_id
+- Unique index on (user_id, lesson_id)
+- lesson_id (for querying reviews by lesson)
+
+================================================================================
+SUMMARY OF DATA TYPES
+================================================================================
+
+Primitive Types:
+- String: Text data (often trimmed)
+- Number: Numeric data (integers or decimals)
+- Boolean: true/false values
+- Date: Date and time values
+- ObjectId: MongoDB ObjectId (references to other models)
+- Array[String]: Array of string values
+
+Enum Types:
+- User.role: ["parent", "student", "teacher", "admin"]
+- Lesson.price_unit: ["hour", "session", "month"]
+- Enrollment.status: ["pending", "confirmed", "cancelled", "completed"]
+- Enrollment.payment_status: ["pending", "paid", "failed", "refunded"]
+- Enrollment.payment_method: ["card", "paypal", "bank_transfer"]
+
+Auto-Generated Fields:
+- _id: MongoDB ObjectId (all models)
+- createdAt: Date timestamp (all models with timestamps)
+- updatedAt: Date timestamp (all models with timestamps)
+
+================================================================================
+RELATIONSHIPS BETWEEN MODELS
+================================================================================
+
+User Model:
+  - Referenced by: CartItem, Enrollment, Review
+
+Category Model:
+  - Referenced by: Lesson
+
+Teacher Model:
+  - Referenced by: Lesson
+
+Lesson Model:
+  - Referenced by: CartItem, Enrollment, Review
+  - References: Category, Teacher
+
+CartItem Model:
+  - References: User, Lesson
+
+Enrollment Model:
+  - References: User, Lesson
+
+Review Model:
+  - References: User, Lesson
+
+================================================================================
+NOTES
+================================================================================
+
+1. All models use Mongoose schemas with timestamps enabled (except where noted)
+2. String fields marked as "trimmed" automatically remove leading/trailing whitespace
+3. Email fields are automatically converted to lowercase
+4. Password fields should be hashed before storage (handled in routes, not models)
+5. ObjectId references enable Mongoose population for related data
+6. Indexes are created for frequently queried fields to improve performance
+7. Unique constraints prevent duplicate entries where specified
+8. Default values are applied when fields are not provided
+9. Min/Max constraints validate numeric ranges
+10. Enum fields restrict values to specified options
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
+

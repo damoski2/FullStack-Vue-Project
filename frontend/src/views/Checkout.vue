@@ -347,7 +347,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import store from "../store";
 
@@ -411,4 +411,26 @@ const handleCompleteEnrollment = () => {
     router.push("/");
   }
 };
+
+// Redirect if not logged in
+onMounted(() => {
+  // Check if user is logged in
+  const token = localStorage.getItem("token");
+  const user =
+    store.user ||
+    (localStorage.getItem("user")
+      ? JSON.parse(localStorage.getItem("user"))
+      : null);
+
+  if (!token || !user) {
+    // User is not logged in, redirect to login
+    router.push("/login");
+    return;
+  }
+
+  // Ensure user data is loaded
+  if (!store.isLoggedIn && token) {
+    store.loadUser();
+  }
+});
 </script>

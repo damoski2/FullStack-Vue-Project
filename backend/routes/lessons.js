@@ -87,6 +87,8 @@ router.get("/", optionalAuth, async (req, res) => {
       filter.$or = [
         { title: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
+        { subject: { $regex: search, $options: "i" } },
+        { location: { $regex: search, $options: "i" } },
         { teacher_id: { $in: teacherIds.map((t) => t._id) } },
       ];
     }
@@ -98,38 +100,99 @@ router.get("/", optionalAuth, async (req, res) => {
       "rating",
       "title",
       "students_enrolled",
+      "subject",
+      "location",
+      "spaces",
     ];
     const sortField = validSortFields.includes(sortBy) ? sortBy : "createdAt";
-    const sort = {};
-    sort[sortField] = sortOrder.toLowerCase() === "asc" ? 1 : -1;
 
     // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Get lessons with populated fields
-    const lessons = await Lesson.find(filter)
-      .populate("category_id", "name icon")
-      .populate("teacher_id", "name title avatar rating")
-      .sort(sort)
-      .skip(skip)
-      .limit(parseInt(limit))
-      .lean();
+    let lessons;
+    let transformedLessons;
 
-    // Transform lessons to match expected format
-    const transformedLessons = lessons.map((lesson) => ({
-      ...lesson,
-      id: lesson._id.toString(),
-      category_name: lesson.category_id?.name,
-      category_icon: lesson.category_id?.icon,
-      teacher_name: lesson.teacher_id?.name,
-      teacher_title: lesson.teacher_id?.title,
-      teacher_avatar: lesson.teacher_id?.avatar,
-      teacher_rating: lesson.teacher_id?.rating,
-      category_id: lesson.category_id?._id.toString(),
-      teacher_id: lesson.teacher_id?._id.toString(),
-      created_at: lesson.createdAt,
-      updated_at: lesson.updatedAt,
-    }));
+    // Handle sorting - spaces requires calculation, others can use MongoDB sort
+    if (sortField === "spaces") {
+      // For spaces, we need to fetch all lessons, calculate spaces, sort, then paginate
+      lessons = await Lesson.find(filter)
+        .populate("category_id", "name icon")
+        .populate("teacher_id", "name title avatar rating")
+        .lean();
+
+      // Transform and calculate spaces
+      transformedLessons = lessons.map((lesson) => {
+        const maxStudents = lesson.max_students || 20;
+        const studentsEnrolled = lesson.students_enrolled || 0;
+        const spacesAvailable = Math.max(0, maxStudents - studentsEnrolled);
+
+        return {
+          ...lesson,
+          id: lesson._id.toString(),
+          category_name: lesson.category_id?.name,
+          category_icon: lesson.category_id?.icon,
+          teacher_name: lesson.teacher_id?.name,
+          teacher_title: lesson.teacher_id?.title,
+          teacher_avatar: lesson.teacher_id?.avatar,
+          teacher_rating: lesson.teacher_id?.rating,
+          category_id: lesson.category_id?._id.toString(),
+          teacher_id: lesson.teacher_id?._id.toString(),
+          created_at: lesson.createdAt,
+          updated_at: lesson.updatedAt,
+          spaces_available: spacesAvailable,
+        };
+      });
+
+      // Sort by calculated spaces available
+      transformedLessons.sort((a, b) => {
+        const aSpaces = a.spaces_available || 0;
+        const bSpaces = b.spaces_available || 0;
+        return sortOrder.toLowerCase() === "asc"
+          ? aSpaces - bSpaces
+          : bSpaces - aSpaces;
+      });
+
+      // Apply pagination
+      transformedLessons = transformedLessons.slice(
+        skip,
+        skip + parseInt(limit)
+      );
+    } else {
+      // For other fields, use MongoDB sort directly (more efficient)
+      const sort = {};
+      sort[sortField] = sortOrder.toLowerCase() === "asc" ? 1 : -1;
+
+      lessons = await Lesson.find(filter)
+        .populate("category_id", "name icon")
+        .populate("teacher_id", "name title avatar rating")
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean();
+
+      // Transform lessons
+      transformedLessons = lessons.map((lesson) => {
+        const maxStudents = lesson.max_students || 20;
+        const studentsEnrolled = lesson.students_enrolled || 0;
+        const spacesAvailable = Math.max(0, maxStudents - studentsEnrolled);
+
+        return {
+          ...lesson,
+          id: lesson._id.toString(),
+          category_name: lesson.category_id?.name,
+          category_icon: lesson.category_id?.icon,
+          teacher_name: lesson.teacher_id?.name,
+          teacher_title: lesson.teacher_id?.title,
+          teacher_avatar: lesson.teacher_id?.avatar,
+          teacher_rating: lesson.teacher_id?.rating,
+          category_id: lesson.category_id?._id.toString(),
+          teacher_id: lesson.teacher_id?._id.toString(),
+          created_at: lesson.createdAt,
+          updated_at: lesson.updatedAt,
+          spaces_available: spacesAvailable,
+        };
+      });
+    }
 
     // Get total count
     const total = await Lesson.countDocuments(filter);
@@ -273,7 +336,10 @@ router.get("/:id", optionalAuth, async (req, res) => {
 
     const lesson = await Lesson.findById(id)
       .populate("category_id", "name icon description")
-      .populate("teacher_id", "name title avatar bio credentials experience_years rating total_reviews")
+      .populate(
+        "teacher_id",
+        "name title avatar bio credentials experience_years rating total_reviews"
+      )
       .lean();
 
     if (!lesson) {
@@ -376,12 +442,10 @@ router.post(
       .trim()
       .isLength({ min: 3 })
       .withMessage("Title must be at least 3 characters"),
-    body("category_id")
-      .notEmpty()
-      .withMessage("Category ID is required"),
-    body("teacher_id")
-      .notEmpty()
-      .withMessage("Teacher ID is required"),
+    body("subject").trim().notEmpty().withMessage("Subject is required"),
+    body("location").trim().notEmpty().withMessage("Location is required"),
+    body("category_id").notEmpty().withMessage("Category ID is required"),
+    body("teacher_id").notEmpty().withMessage("Teacher ID is required"),
     body("price")
       .isFloat({ min: 0 })
       .withMessage("Price must be a positive number"),
@@ -411,6 +475,8 @@ router.post(
 
       const {
         title,
+        subject,
+        location,
         category_id,
         teacher_id,
         price,
@@ -446,6 +512,9 @@ router.post(
       let imageUrl = null;
       if (req.file) {
         imageUrl = `/uploads/${req.file.filename}`;
+      } else if (req.body.image) {
+        // Allow image URL from body if no file uploaded
+        imageUrl = req.body.image;
       }
 
       // Parse features if it's a string
@@ -462,6 +531,8 @@ router.post(
       // Create lesson
       const lesson = await Lesson.create({
         title,
+        subject,
+        location,
         category_id,
         teacher_id,
         price,
@@ -559,6 +630,8 @@ router.put(
 
       const {
         title,
+        subject,
+        location,
         category_id,
         teacher_id,
         price,
@@ -577,6 +650,8 @@ router.put(
       const updateData = {};
 
       if (title) updateData.title = title;
+      if (subject) updateData.subject = subject;
+      if (location) updateData.location = location;
       if (category_id) updateData.category_id = category_id;
       if (teacher_id) updateData.teacher_id = teacher_id;
       if (price !== undefined) updateData.price = price;
@@ -612,11 +687,10 @@ router.put(
       }
 
       // Update lesson
-      const lesson = await Lesson.findByIdAndUpdate(
-        id,
-        updateData,
-        { new: true, runValidators: true }
-      )
+      const lesson = await Lesson.findByIdAndUpdate(id, updateData, {
+        new: true,
+        runValidators: true,
+      })
         .populate("category_id", "name")
         .populate("teacher_id", "name title avatar")
         .lean();

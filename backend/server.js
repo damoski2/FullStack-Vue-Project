@@ -12,6 +12,7 @@ import lessonsRoutes from "./routes/lessons.js";
 import cartRoutes from "./routes/cart.js";
 import enrollmentRoutes from "./routes/enrollment.js";
 import userRoutes from "./routes/users.js";
+import categoryRoutes from "./routes/categories.js";
 
 // Import middleware
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
@@ -68,6 +69,7 @@ app.use("/api/lessons", lessonsRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/categories", categoryRoutes);
 
 // Error handling middleware
 app.use(notFound);

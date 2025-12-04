@@ -6,7 +6,11 @@ import Review from "../models/Review.js";
 import Lesson from "../models/Lesson.js";
 import Category from "../models/Category.js";
 import Teacher from "../models/Teacher.js";
-import { authenticateToken, requireAdmin } from "../middleware/auth.js";
+import {
+  authenticateToken,
+  requireAdmin,
+  requireTeacher,
+} from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -396,5 +400,281 @@ router.get("/", authenticateToken, requireAdmin, async (req, res) => {
     });
   }
 });
+
+// @route   GET /api/users/teacher-profile
+// @desc    Get teacher profile
+// @access  Private (Teacher only)
+router.get(
+  "/teacher-profile",
+  authenticateToken,
+  requireTeacher,
+  async (req, res) => {
+    try {
+      const teacher = await Teacher.findOne({ user_id: req.user.id });
+
+      if (!teacher) {
+        return res.json({
+          success: true,
+          data: { teacher: null },
+          message: "Teacher profile not created yet",
+        });
+      }
+
+      const teacherData = {
+        id: teacher._id.toString(),
+        user_id: teacher.user_id.toString(),
+        name: teacher.name,
+        title: teacher.title,
+        avatar: teacher.avatar,
+        bio: teacher.bio,
+        credentials: teacher.credentials,
+        experience_years: teacher.experience_years,
+        rating: teacher.rating,
+        total_reviews: teacher.total_reviews,
+        created_at: teacher.createdAt,
+        updated_at: teacher.updatedAt,
+      };
+
+      res.json({
+        success: true,
+        data: { teacher: teacherData },
+      });
+    } catch (error) {
+      console.error("Get teacher profile error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while fetching teacher profile",
+      });
+    }
+  }
+);
+
+// @route   POST /api/users/teacher-profile
+// @desc    Create teacher profile
+// @access  Private (Teacher only)
+router.post(
+  "/teacher-profile",
+  authenticateToken,
+  requireTeacher,
+  [
+    body("title")
+      .trim()
+      .isLength({ min: 2 })
+      .withMessage("Title must be at least 2 characters")
+      .isLength({ max: 100 })
+      .withMessage("Title must be less than 100 characters"),
+    body("bio")
+      .optional()
+      .trim()
+      .isLength({ max: 1000 })
+      .withMessage("Bio must be less than 1000 characters"),
+    body("credentials")
+      .optional()
+      .trim()
+      .isLength({ max: 500 })
+      .withMessage("Credentials must be less than 500 characters"),
+    body("avatar")
+      .optional()
+      .trim()
+      .isURL()
+      .withMessage("Avatar must be a valid URL")
+      .isLength({ max: 500 })
+      .withMessage("Avatar URL must be less than 500 characters"),
+    body("experience_years")
+      .optional()
+      .isInt({ min: 0, max: 50 })
+      .withMessage("Experience years must be between 0 and 50"),
+  ],
+  async (req, res) => {
+    try {
+      // Check validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: errors.array(),
+        });
+      }
+
+      // Check if teacher profile already exists
+      const existingTeacher = await Teacher.findOne({ user_id: req.user.id });
+      if (existingTeacher) {
+        return res.status(400).json({
+          success: false,
+          message: "Teacher profile already exists. Use PUT to update.",
+        });
+      }
+
+      // Get user info
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      const { title, bio, credentials, avatar, experience_years } = req.body;
+
+      // Create teacher profile
+      const teacher = await Teacher.create({
+        user_id: req.user.id,
+        name: user.name,
+        title: title.trim(),
+        bio: bio?.trim() || "",
+        credentials: credentials?.trim() || "",
+        avatar: avatar?.trim() || "",
+        experience_years: experience_years || 0,
+      });
+
+      const teacherData = {
+        id: teacher._id.toString(),
+        user_id: teacher.user_id.toString(),
+        name: teacher.name,
+        title: teacher.title,
+        avatar: teacher.avatar,
+        bio: teacher.bio,
+        credentials: teacher.credentials,
+        experience_years: teacher.experience_years,
+        rating: teacher.rating,
+        total_reviews: teacher.total_reviews,
+        created_at: teacher.createdAt,
+        updated_at: teacher.updatedAt,
+      };
+
+      res.status(201).json({
+        success: true,
+        message: "Teacher profile created successfully",
+        data: { teacher: teacherData },
+      });
+    } catch (error) {
+      console.error("Create teacher profile error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while creating teacher profile",
+      });
+    }
+  }
+);
+
+// @route   PUT /api/users/teacher-profile
+// @desc    Update teacher profile
+// @access  Private (Teacher only)
+router.put(
+  "/teacher-profile",
+  authenticateToken,
+  requireTeacher,
+  [
+    body("title")
+      .optional()
+      .trim()
+      .isLength({ min: 2 })
+      .withMessage("Title must be at least 2 characters")
+      .isLength({ max: 100 })
+      .withMessage("Title must be less than 100 characters"),
+    body("bio")
+      .optional()
+      .trim()
+      .isLength({ max: 1000 })
+      .withMessage("Bio must be less than 1000 characters"),
+    body("credentials")
+      .optional()
+      .trim()
+      .isLength({ max: 500 })
+      .withMessage("Credentials must be less than 500 characters"),
+    body("avatar")
+      .optional()
+      .trim()
+      .isURL()
+      .withMessage("Avatar must be a valid URL")
+      .isLength({ max: 500 })
+      .withMessage("Avatar URL must be less than 500 characters"),
+    body("experience_years")
+      .optional()
+      .isInt({ min: 0, max: 50 })
+      .withMessage("Experience years must be between 0 and 50"),
+  ],
+  async (req, res) => {
+    try {
+      // Check validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: errors.array(),
+        });
+      }
+
+      // Find teacher profile
+      const teacher = await Teacher.findOne({ user_id: req.user.id });
+      if (!teacher) {
+        return res.status(404).json({
+          success: false,
+          message: "Teacher profile not found. Create it first using POST.",
+        });
+      }
+
+      const { title, bio, credentials, avatar, experience_years } = req.body;
+      const updateData = {};
+
+      if (title !== undefined) updateData.title = title.trim();
+      if (bio !== undefined) updateData.bio = bio.trim();
+      if (credentials !== undefined)
+        updateData.credentials = credentials.trim();
+      if (avatar !== undefined) updateData.avatar = avatar.trim();
+      if (experience_years !== undefined)
+        updateData.experience_years = experience_years;
+
+      // Update user name if it changed
+      const user = await User.findById(req.user.id);
+      if (user && user.name !== teacher.name) {
+        updateData.name = user.name;
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "No fields to update",
+        });
+      }
+
+      // Update teacher profile
+      const updatedTeacher = await Teacher.findByIdAndUpdate(
+        teacher._id,
+        updateData,
+        { new: true, runValidators: true }
+      );
+
+      const teacherData = {
+        id: updatedTeacher._id.toString(),
+        user_id: updatedTeacher.user_id.toString(),
+        name: updatedTeacher.name,
+        title: updatedTeacher.title,
+        avatar: updatedTeacher.avatar,
+        bio: updatedTeacher.bio,
+        credentials: updatedTeacher.credentials,
+        experience_years: updatedTeacher.experience_years,
+        rating: updatedTeacher.rating,
+        total_reviews: updatedTeacher.total_reviews,
+        created_at: updatedTeacher.createdAt,
+        updated_at: updatedTeacher.updatedAt,
+      };
+
+      res.json({
+        success: true,
+        message: "Teacher profile updated successfully",
+        data: { teacher: teacherData },
+      });
+    } catch (error) {
+      console.error("Update teacher profile error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while updating teacher profile",
+      });
+    }
+  }
+);
 
 export default router;

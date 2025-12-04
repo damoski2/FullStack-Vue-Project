@@ -23,6 +23,10 @@ class ApiService {
   // Generic API request method
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
+
+    // Always get the latest token from localStorage
+    const token = localStorage.getItem("token") || this.token;
+
     const config = {
       headers: {
         "Content-Type": "application/json",
@@ -32,8 +36,10 @@ class ApiService {
     };
 
     // Add authorization header if token exists
-    if (this.token) {
-      config.headers.Authorization = `Bearer ${this.token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      // Update instance token for consistency
+      this.token = token;
     }
 
     try {
@@ -210,6 +216,25 @@ class ApiService {
 
   async getUserDashboard() {
     return this.request("/users/dashboard");
+  }
+
+  // Teacher Profile API
+  async getTeacherProfile() {
+    return this.request("/users/teacher-profile");
+  }
+
+  async createTeacherProfile(profileData) {
+    return this.request("/users/teacher-profile", {
+      method: "POST",
+      body: JSON.stringify(profileData),
+    });
+  }
+
+  async updateTeacherProfile(profileData) {
+    return this.request("/users/teacher-profile", {
+      method: "PUT",
+      body: JSON.stringify(profileData),
+    });
   }
 }
 

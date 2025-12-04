@@ -120,6 +120,54 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+              />
+            </svg>
+            <div>
+              <p class="text-sm text-gray-500">Subject</p>
+              <p class="font-semibold text-gray-900">{{ lesson.subject }}</p>
+            </div>
+          </div>
+          <div
+            class="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-200"
+          >
+            <svg
+              class="w-6 h-6 text-indigo-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+            <div>
+              <p class="text-sm text-gray-500">Location</p>
+              <p class="font-semibold text-gray-900">{{ lesson.location }}</p>
+            </div>
+          </div>
+          <div
+            class="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-200"
+          >
+            <svg
+              class="w-6 h-6 text-indigo-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
@@ -189,8 +237,15 @@
               />
             </svg>
             <div>
-              <p class="text-sm text-gray-500">Class Size</p>
-              <p class="font-semibold text-gray-900">Small Group</p>
+              <p class="text-sm text-gray-500">Spaces Available</p>
+              <p
+                class="font-semibold text-gray-900"
+                :class="
+                  lesson.spacesAvailable > 0 ? 'text-green-600' : 'text-red-600'
+                "
+              >
+                {{ lesson.spacesAvailable }} / {{ lesson.maxStudents }}
+              </p>
             </div>
           </div>
         </div>
@@ -236,10 +291,12 @@
         <div class="flex flex-col sm:flex-row gap-4">
           <div
             class="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden"
+            :class="lesson.spacesAvailable <= 0 ? 'opacity-50' : ''"
           >
             <button
               @click="quantity > 1 && quantity--"
-              class="px-4 py-3 bg-gray-100 hover:bg-gray-200 transition-colors"
+              :disabled="lesson.spacesAvailable <= 0"
+              class="px-4 py-3 bg-gray-100 hover:bg-gray-200 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               <svg
                 class="w-4 h-4"
@@ -259,11 +316,17 @@
               v-model.number="quantity"
               type="number"
               min="1"
-              class="w-20 text-center py-3 focus:outline-none font-semibold"
+              :max="lesson.spacesAvailable"
+              :disabled="lesson.spacesAvailable <= 0"
+              class="w-20 text-center py-3 focus:outline-none font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             />
             <button
-              @click="quantity++"
-              class="px-4 py-3 bg-gray-100 hover:bg-gray-200 transition-colors"
+              @click="quantity < lesson.spacesAvailable && quantity++"
+              :disabled="
+                lesson.spacesAvailable <= 0 ||
+                quantity >= lesson.spacesAvailable
+              "
+              class="px-4 py-3 bg-gray-100 hover:bg-gray-200 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               <svg
                 class="w-4 h-4"
@@ -283,7 +346,13 @@
 
           <button
             @click="handleEnroll"
-            class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 shadow-lg"
+            :disabled="lesson.spacesAvailable <= 0"
+            :class="[
+              'flex-1 px-8 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 shadow-lg',
+              lesson.spacesAvailable > 0
+                ? 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed',
+            ]"
           >
             <svg
               class="w-6 h-6"
@@ -298,7 +367,11 @@
                 d="M12 6v6m0 0v6m0-6h6m-6 0H6"
               ></path>
             </svg>
-            <span>Enroll Now</span>
+            <span>{{
+              lesson.spacesAvailable > 0
+                ? "Enroll Now"
+                : "Full - No Spaces Available"
+            }}</span>
           </button>
         </div>
       </div>
@@ -342,7 +415,15 @@
     </div>
   </div>
 
-  <!-- Not Found -->
+  <!-- Loading State -->
+  <div v-else-if="isLoading" class="container mx-auto px-4 py-16 text-center">
+    <div
+      class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"
+    ></div>
+    <p class="text-gray-600">Loading class details...</p>
+  </div>
+
+  <!-- Error/Not Found State -->
   <div v-else class="container mx-auto px-4 py-16 text-center">
     <svg
       class="w-24 h-24 mx-auto text-gray-300 mb-4"
@@ -358,6 +439,7 @@
       ></path>
     </svg>
     <h2 class="text-2xl font-semibold text-gray-700 mb-4">Class Not Found</h2>
+    <p v-if="error" class="text-gray-500 mb-4">{{ error }}</p>
     <router-link
       to="/"
       class="text-indigo-600 hover:text-indigo-700 font-medium"
@@ -367,33 +449,144 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { lessons } from "../store";
 import store from "../store";
+import apiService from "../services/api.js";
 
 const route = useRoute();
 const router = useRouter();
 const quantity = ref(1);
+const lesson = ref(null);
+const relatedLessons = ref([]);
+const isLoading = ref(true);
+const error = ref(null);
 
-const lesson = computed(() => {
-  const id = parseInt(route.params.id);
-  return lessons.find((l) => l.id === id);
-});
+// Transform API lesson data to match frontend format
+const transformLesson = (apiLesson) => {
+  const maxStudents = apiLesson.max_students || 20;
+  const studentsEnrolled = apiLesson.students_enrolled || 0;
+  const spacesAvailable = Math.max(0, maxStudents - studentsEnrolled);
 
-const relatedLessons = computed(() => {
-  if (!lesson.value) return [];
-  return lessons
-    .filter(
-      (l) => l.category === lesson.value.category && l.id !== lesson.value.id
-    )
-    .slice(0, 4);
-});
+  return {
+    id: apiLesson.id,
+    title: apiLesson.title,
+    subject: apiLesson.subject || "General",
+    location: apiLesson.location || "TBA",
+    category: apiLesson.category_name || "Uncategorized",
+    teacher: apiLesson.teacher_name || "Unknown Teacher",
+    teacherTitle: apiLesson.teacher_title || "",
+    teacherAvatar:
+      apiLesson.teacher_avatar || "https://i.pravatar.cc/150?img=1",
+    price: apiLesson.price,
+    priceUnit: apiLesson.price_unit,
+    rating: apiLesson.rating || 0,
+    reviews: apiLesson.reviews || 0,
+    duration: apiLesson.duration,
+    schedule: apiLesson.schedule,
+    ageGroup: apiLesson.age_group,
+    studentsEnrolled: studentsEnrolled,
+    maxStudents: maxStudents,
+    spacesAvailable: spacesAvailable,
+    description: apiLesson.description,
+    image:
+      apiLesson.image ||
+      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&q=80",
+    features: apiLesson.features || [],
+    featured: apiLesson.featured || false,
+    available: apiLesson.available !== false,
+  };
+};
 
-const handleEnroll = () => {
-  if (lesson.value) {
-    store.addToCart(lesson.value, quantity.value);
+const loadLesson = async (lessonId) => {
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    const response = await apiService.getLesson(lessonId);
+
+    if (response.success && response.data && response.data.lesson) {
+      lesson.value = transformLesson(response.data.lesson);
+
+      // Load related lessons (same category)
+      await loadRelatedLessons(lesson.value.category, lessonId);
+    } else {
+      error.value = "Lesson not found";
+      lesson.value = null;
+    }
+  } catch (err) {
+    console.error("Error loading lesson:", err);
+    error.value = err.message || "Failed to load lesson";
+    lesson.value = null;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const loadRelatedLessons = async (categoryName, excludeLessonId) => {
+  try {
+    if (!categoryName) return;
+
+    const response = await apiService.getLessons({
+      category: categoryName,
+      available: true,
+    });
+
+    if (response.success && response.data && response.data.lessons) {
+      // Filter out current lesson and limit to 4
+      relatedLessons.value = response.data.lessons
+        .filter((l) => l.id !== excludeLessonId)
+        .slice(0, 4)
+        .map(transformLesson);
+    }
+  } catch (err) {
+    console.error("Error loading related lessons:", err);
+    relatedLessons.value = [];
+  }
+};
+
+const handleEnroll = async () => {
+  if (!lesson.value) return;
+
+  // Check if spaces are available
+  if (lesson.value.spacesAvailable <= 0) {
+    alert("Sorry, this class is full. No spaces available.");
+    return;
+  }
+
+  // Check if quantity exceeds available spaces
+  if (quantity.value > lesson.value.spacesAvailable) {
+    alert(
+      `Only ${lesson.value.spacesAvailable} space(s) available. Please adjust quantity.`
+    );
+    quantity.value = lesson.value.spacesAvailable;
+    return;
+  }
+
+  try {
+    // Always save to localStorage first
+    store.addToLocalCart(lesson.value.id, quantity.value);
+
+    // If logged in, sync with backend API
+    if (store.isLoggedIn) {
+      try {
+        await apiService.addToCart(lesson.value.id, quantity.value);
+        // Refresh cart count from API
+        await store.refreshCartCount();
+      } catch (apiErr) {
+        console.error("Error syncing cart with API:", apiErr);
+        // Continue anyway - localStorage already saved
+      }
+    }
+
     alert(`${quantity.value} enrollment(s) added to cart!`);
+  } catch (err) {
+    console.error("Error adding to cart:", err);
+    const errorMessage =
+      err.response?.data?.message ||
+      err.message ||
+      "Failed to add to cart. Please try again.";
+    alert(errorMessage);
   }
 };
 
@@ -406,10 +599,21 @@ const goToLesson = (id) => {
 // Watch for route changes
 watch(
   () => route.params.id,
-  () => {
-    quantity.value = 1;
-  }
+  (newId) => {
+    if (newId) {
+      quantity.value = 1;
+      loadLesson(newId);
+    }
+  },
+  { immediate: true }
 );
+
+// Load lesson on mount
+onMounted(() => {
+  if (route.params.id) {
+    loadLesson(route.params.id);
+  }
+});
 </script>
 
 <style scoped>

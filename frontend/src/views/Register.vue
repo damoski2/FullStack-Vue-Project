@@ -31,7 +31,9 @@
         <!-- Form -->
         <form @submit.prevent="handleRegister" class="space-y-5">
           <div>
-            <label for="register-name" class="block text-sm font-medium text-gray-700 mb-2"
+            <label
+              for="register-name"
+              class="block text-sm font-medium text-gray-700 mb-2"
               >Full Name</label
             >
             <input
@@ -54,7 +56,9 @@
           </div>
 
           <div>
-            <label for="register-email" class="block text-sm font-medium text-gray-700 mb-2"
+            <label
+              for="register-email"
+              class="block text-sm font-medium text-gray-700 mb-2"
               >Email Address</label
             >
             <input
@@ -77,7 +81,9 @@
           </div>
 
           <div>
-            <label for="register-password" class="block text-sm font-medium text-gray-700 mb-2"
+            <label
+              for="register-password"
+              class="block text-sm font-medium text-gray-700 mb-2"
               >Password</label
             >
             <input
@@ -104,7 +110,9 @@
           </div>
 
           <div>
-            <label for="register-confirm-password" class="block text-sm font-medium text-gray-700 mb-2"
+            <label
+              for="register-confirm-password"
+              class="block text-sm font-medium text-gray-700 mb-2"
               >Confirm Password</label
             >
             <input
@@ -123,6 +131,37 @@
             />
             <p v-if="errors.confirmPassword" class="mt-1 text-sm text-red-600">
               {{ errors.confirmPassword }}
+            </p>
+          </div>
+
+          <div>
+            <label
+              for="register-role"
+              class="block text-sm font-medium text-gray-700 mb-2"
+              >I am a</label
+            >
+            <select
+              id="register-role"
+              v-model="role"
+              required
+              :class="[
+                'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all bg-white',
+                errors.role
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 focus:ring-blue-500',
+              ]"
+              @change="clearError('role')"
+            >
+              <option value="" disabled>Select your role</option>
+              <option value="parent">Parent</option>
+              <option value="student">Student</option>
+              <option value="teacher">Teacher</option>
+            </select>
+            <p v-if="errors.role" class="mt-1 text-sm text-red-600">
+              {{ errors.role }}
+            </p>
+            <p v-else class="mt-1 text-xs text-gray-500">
+              Choose the role that best describes you
             </p>
           </div>
 
@@ -145,7 +184,10 @@
             </label>
           </div>
 
-          <div v-if="errorMessage" class="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div
+            v-if="errorMessage"
+            class="p-3 bg-red-50 border border-red-200 rounded-lg"
+          >
             <p class="text-sm text-red-600">{{ errorMessage }}</p>
           </div>
 
@@ -229,7 +271,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import store from "../store";
 import apiService from "../services/api.js";
@@ -239,6 +281,7 @@ const name = ref("");
 const email = ref("");
 const password = ref("");
 const confirmPassword = ref("");
+const role = ref("");
 const agreedToTerms = ref(false);
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -247,6 +290,7 @@ const errors = ref({
   email: "",
   password: "",
   confirmPassword: "",
+  role: "",
 });
 
 const clearError = (field) => {
@@ -265,6 +309,7 @@ const validateForm = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "",
   };
 
   // Name validation
@@ -303,6 +348,15 @@ const validateForm = () => {
     isValid = false;
   }
 
+  // Role validation
+  if (!role.value) {
+    errors.value.role = "Please select your role";
+    isValid = false;
+  } else if (!["parent", "student", "teacher"].includes(role.value)) {
+    errors.value.role = "Please select a valid role";
+    isValid = false;
+  }
+
   // Terms validation
   if (!agreedToTerms.value) {
     errorMessage.value = "Please agree to the terms and conditions";
@@ -328,7 +382,7 @@ const handleRegister = async () => {
       name: name.value.trim(),
       email: email.value.trim(),
       password: password.value,
-      role: "parent", // Default role
+      role: role.value,
     });
 
     if (response.success && response.data) {
@@ -356,6 +410,8 @@ const handleRegister = async () => {
           errors.value.email = err.msg;
         } else if (err.path === "password") {
           errors.value.password = err.msg;
+        } else if (err.path === "role") {
+          errors.value.role = err.msg;
         }
       });
       errorMessage.value = "Please fix the errors above.";
@@ -369,4 +425,27 @@ const handleRegister = async () => {
     isLoading.value = false;
   }
 };
+
+// Redirect if already logged in
+onMounted(() => {
+  // Check if user is logged in
+  const token = localStorage.getItem("token");
+  const user =
+    store.user ||
+    (localStorage.getItem("user")
+      ? JSON.parse(localStorage.getItem("user"))
+      : null);
+
+  if (token && user) {
+    // User is already logged in, redirect to home
+    router.push("/");
+  } else if (token) {
+    // Token exists but user data not loaded, try to load user
+    store.loadUser().then(() => {
+      if (store.isLoggedIn) {
+        router.push("/");
+      }
+    });
+  }
+});
 </script>

@@ -340,12 +340,10 @@ export const lessons = [
   },
 ];
 
-
-
-
 // Store state
 export const store = reactive({
   cart: [],
+  cartCount: 0,
   user: null,
   isLoggedIn: false,
 
@@ -371,7 +369,7 @@ export const store = reactive({
   },
 
   updateQuantity(lessonId, quantity) {
-    const item = this.cart.find((item) => item.id === lessonId);
+    const item = this.cart.find((item) => item.id !== lessonId);
     if (item) {
       item.quantity = quantity;
       if (item.quantity <= 0) {
@@ -383,6 +381,7 @@ export const store = reactive({
 
   clearCart() {
     this.cart = [];
+    this.cartCount = 0;
     this.saveCart();
   },
 
@@ -394,7 +393,50 @@ export const store = reactive({
   },
 
   getCartCount() {
-    return this.cart.reduce((count, item) => count + item.quantity, 0);
+    return this.cartCount;
+  },
+
+  async refreshCartCount() {
+    // Always load from localStorage first
+    const localItems = this.loadCartItems();
+
+    if (!this.isLoggedIn) {
+      // Use localStorage count if not logged in
+      this.cartCount = localItems.reduce(
+        (count, item) => count + item.quantity,
+        0
+      );
+      return;
+    }
+
+    // If logged in, sync with backend API
+    try {
+      const apiService = (await import("../services/api.js")).default;
+      const response = await apiService.getCartCount();
+      if (response.success && response.data) {
+        this.cartCount = response.data.count || 0;
+        // Update localStorage with backend count if different
+        if (
+          this.cartCount !==
+          localItems.reduce((count, item) => count + item.quantity, 0)
+        ) {
+          // Backend is source of truth when logged in
+        }
+      } else {
+        // Fallback to localStorage if API fails
+        this.cartCount = localItems.reduce(
+          (count, item) => count + item.quantity,
+          0
+        );
+      }
+    } catch (error) {
+      console.error("Failed to refresh cart count:", error);
+      // Fallback to localStorage if API fails
+      this.cartCount = localItems.reduce(
+        (count, item) => count + item.quantity,
+        0
+      );
+    }
   },
 
   // User methods
@@ -423,16 +465,86 @@ export const store = reactive({
     }
   },
 
-  // Persistence
-  saveCart() {
-    localStorage.setItem("cart", JSON.stringify(this.cart));
+  // Persistence - Save cart items to localStorage
+  saveCartItems(cartItems) {
+    try {
+      localStorage.setItem("cartItems", JSON.stringify(cartItems));
+      // Update cart count from localStorage
+      this.cartCount = cartItems.reduce(
+        (count, item) => count + item.quantity,
+        0
+      );
+    } catch (error) {
+      console.error("Failed to save cart to localStorage:", error);
+    }
   },
 
-  loadCart() {
-    const savedCart = localStorage.getItem("cart");
-    if (savedCart) {
-      this.cart = JSON.parse(savedCart);
+  // Load cart items from localStorage
+  loadCartItems() {
+    try {
+      const savedCart = localStorage.getItem("cartItems");
+      if (savedCart) {
+        const items = JSON.parse(savedCart);
+        this.cartCount = items.reduce(
+          (count, item) => count + item.quantity,
+          0
+        );
+        return items;
+      }
+    } catch (error) {
+      console.error("Failed to load cart from localStorage:", error);
     }
+    return [];
+  },
+
+  // Add item to localStorage cart
+  addToLocalCart(lessonId, quantity = 1) {
+    const items = this.loadCartItems();
+    const existingIndex = items.findIndex(
+      (item) => item.lesson_id === lessonId
+    );
+
+    if (existingIndex >= 0) {
+      items[existingIndex].quantity += quantity;
+    } else {
+      items.push({
+        lesson_id: lessonId,
+        quantity: quantity,
+      });
+    }
+
+    this.saveCartItems(items);
+  },
+
+  // Remove item from localStorage cart
+  removeFromLocalCart(lessonId) {
+    const items = this.loadCartItems();
+    const filtered = items.filter((item) => item.lesson_id !== lessonId);
+    this.saveCartItems(filtered);
+  },
+
+  // Update quantity in localStorage cart
+  updateLocalCartQuantity(lessonId, quantity) {
+    if (quantity <= 0) {
+      this.removeFromLocalCart(lessonId);
+      return;
+    }
+
+    const items = this.loadCartItems();
+    const existingIndex = items.findIndex(
+      (item) => item.lesson_id === lessonId
+    );
+
+    if (existingIndex >= 0) {
+      items[existingIndex].quantity = quantity;
+      this.saveCartItems(items);
+    }
+  },
+
+  // Clear localStorage cart
+  clearLocalCart() {
+    localStorage.removeItem("cartItems");
+    this.cartCount = 0;
   },
 
   async loadUser() {
@@ -446,6 +558,8 @@ export const store = reactive({
           this.user = response.data.user;
           this.isLoggedIn = true;
           localStorage.setItem("user", JSON.stringify(response.data.user));
+          // Refresh cart count when user loads
+          await this.refreshCartCount();
         } else {
           // Token might be invalid, clear it
           this.clearAuth();
@@ -461,6 +575,8 @@ export const store = reactive({
       if (savedUser) {
         this.user = JSON.parse(savedUser);
         this.isLoggedIn = true;
+        // Refresh cart count when user loads
+        await this.refreshCartCount();
       }
     }
   },
@@ -468,12 +584,14 @@ export const store = reactive({
   clearAuth() {
     this.user = null;
     this.isLoggedIn = false;
+    this.cartCount = 0;
     localStorage.removeItem("user");
     localStorage.removeItem("token");
   },
 
   init() {
-    this.loadCart();
+    // Load cart count from localStorage on init
+    this.loadCartItems();
     this.loadUser();
   },
 });

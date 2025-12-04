@@ -180,7 +180,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import store from "../store";
 import apiService from "../services/api.js";
@@ -274,4 +274,27 @@ const handleLogin = async () => {
     isLoading.value = false;
   }
 };
+
+// Redirect if already logged in
+onMounted(() => {
+  // Check if user is logged in
+  const token = localStorage.getItem("token");
+  const user =
+    store.user ||
+    (localStorage.getItem("user")
+      ? JSON.parse(localStorage.getItem("user"))
+      : null);
+
+  if (token && user) {
+    // User is already logged in, redirect to home
+    router.push("/");
+  } else if (token) {
+    // Token exists but user data not loaded, try to load user
+    store.loadUser().then(() => {
+      if (store.isLoggedIn) {
+        router.push("/");
+      }
+    });
+  }
+});
 </script>

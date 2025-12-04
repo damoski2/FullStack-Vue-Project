@@ -84,7 +84,11 @@ router.post(
   "/add",
   authenticateToken,
   [
-    body("lesson_id").isInt().withMessage("Lesson ID must be a valid integer"),
+    body("lesson_id")
+      .notEmpty()
+      .withMessage("Lesson ID is required")
+      .matches(/^[0-9a-fA-F]{24}$/)
+      .withMessage("Lesson ID must be a valid MongoDB ObjectId"),
     body("quantity")
       .optional()
       .isInt({ min: 1 })
@@ -186,7 +190,11 @@ router.put(
   "/update",
   authenticateToken,
   [
-    body("lesson_id").notEmpty().withMessage("Lesson ID is required"),
+    body("lesson_id")
+      .notEmpty()
+      .withMessage("Lesson ID is required")
+      .matches(/^[0-9a-fA-F]{24}$/)
+      .withMessage("Lesson ID must be a valid MongoDB ObjectId"),
     body("quantity")
       .isInt({ min: 1 })
       .withMessage("Quantity must be a positive integer"),
@@ -266,7 +274,13 @@ router.put(
 router.delete(
   "/remove",
   authenticateToken,
-  [body("lesson_id").notEmpty().withMessage("Lesson ID is required")],
+  [
+    body("lesson_id")
+      .notEmpty()
+      .withMessage("Lesson ID is required")
+      .matches(/^[0-9a-fA-F]{24}$/)
+      .withMessage("Lesson ID must be a valid MongoDB ObjectId"),
+  ],
   async (req, res) => {
     try {
       // Check validation errors

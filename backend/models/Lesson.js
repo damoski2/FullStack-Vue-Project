@@ -7,6 +7,16 @@ const lessonSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    subject: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    location: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     category_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
@@ -90,4 +100,3 @@ lessonSchema.index({ featured: 1 });
 lessonSchema.index({ available: 1 });
 
 export default mongoose.model("Lesson", lessonSchema);
-
