@@ -313,7 +313,10 @@
                 class="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0"
               >
                 <img
-                  :src="item.image || 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&q=80'"
+                  :src="
+                    item.image ||
+                    'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&q=80'
+                  "
                   :alt="item.title"
                   class="w-full h-full object-cover"
                 />
@@ -322,7 +325,9 @@
                 <p class="text-sm font-medium text-gray-900 truncate">
                   {{ item.title }}
                 </p>
-                <p class="text-xs text-gray-500">{{ item.teacher_name || 'Unknown Teacher' }}</p>
+                <p class="text-xs text-gray-500">
+                  {{ item.teacher_name || "Unknown Teacher" }}
+                </p>
                 <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
               </div>
               <span class="text-sm font-semibold text-gray-900"
@@ -432,22 +437,32 @@ const loadCart = async () => {
 };
 
 const isFormValid = computed(() => {
+  // Check if cart has items
+  if (cartItems.value.length === 0) {
+    return false;
+  }
+
+  // Check all required form fields (trimmed to handle whitespace-only values)
+  // studentAge is a number input, so check if it exists and is not empty
+  const studentAgeValid =
+    form.value.studentAge && String(form.value.studentAge).trim() !== "";
+
   return (
-    form.value.firstName &&
-    form.value.lastName &&
-    form.value.email &&
-    form.value.phone &&
-    form.value.studentFirstName &&
-    form.value.studentLastName &&
-    form.value.studentAge &&
-    form.value.gradeLevel &&
-    form.value.address &&
-    form.value.city &&
-    form.value.state &&
-    form.value.zip &&
-    form.value.cardNumber &&
-    form.value.expiry &&
-    form.value.cvv
+    form.value.firstName?.trim() &&
+    form.value.lastName?.trim() &&
+    form.value.email?.trim() &&
+    form.value.phone?.trim() &&
+    form.value.studentFirstName?.trim() &&
+    form.value.studentLastName?.trim() &&
+    studentAgeValid &&
+    form.value.gradeLevel?.trim() &&
+    form.value.address?.trim() &&
+    form.value.city?.trim() &&
+    form.value.state?.trim() &&
+    form.value.zip?.trim() &&
+    form.value.cardNumber?.trim() &&
+    form.value.expiry?.trim() &&
+    form.value.cvv?.trim()
   );
 });
 
@@ -487,7 +502,9 @@ const handleCompleteEnrollment = async () => {
           form.value.studentLastName
         } has been enrolled in ${response.data.enrollments.length} class${
           response.data.enrollments.length > 1 ? "es" : ""
-        }!\n\nPayment ID: ${response.data.payment_id}\n\nA confirmation email with class details and schedule has been sent to ${
+        }!\n\nPayment ID: ${
+          response.data.payment_id
+        }\n\nA confirmation email with class details and schedule has been sent to ${
           form.value.email
         }.`
       );
