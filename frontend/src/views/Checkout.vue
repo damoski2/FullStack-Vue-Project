@@ -2,8 +2,31 @@
   <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-gray-900 mb-8">Complete Enrollment</h1>
 
+    <!-- Loading State -->
+    <div v-if="isLoading" class="text-center py-16">
+      <div
+        class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"
+      ></div>
+      <p class="text-gray-600">Loading checkout...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="text-center py-16">
+      <div
+        class="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto"
+      >
+        <p class="text-red-600 mb-4">{{ error }}</p>
+        <button
+          @click="loadCart"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+
     <!-- Redirect if cart is empty -->
-    <div v-if="store.cart.length === 0" class="text-center py-16">
+    <div v-else-if="cartItems.length === 0" class="text-center py-16">
       <svg
         class="w-32 h-32 mx-auto text-gray-300 mb-6"
         fill="none"
@@ -282,7 +305,7 @@
           <!-- Cart Items -->
           <div class="space-y-4 mb-6 max-h-64 overflow-y-auto">
             <div
-              v-for="item in store.cart"
+              v-for="item in cartItems"
               :key="item.id"
               class="flex items-center space-x-3"
             >
@@ -290,7 +313,7 @@
                 class="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0"
               >
                 <img
-                  :src="item.image"
+                  :src="item.image || 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&q=80'"
                   :alt="item.title"
                   class="w-full h-full object-cover"
                 />
@@ -299,7 +322,7 @@
                 <p class="text-sm font-medium text-gray-900 truncate">
                   {{ item.title }}
                 </p>
-                <p class="text-xs text-gray-500">{{ item.teacher }}</p>
+                <p class="text-xs text-gray-500">{{ item.teacher_name || 'Unknown Teacher' }}</p>
                 <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
               </div>
               <span class="text-sm font-semibold text-gray-900"
@@ -331,10 +354,11 @@
 
           <button
             @click="handleCompleteEnrollment"
-            :disabled="!isFormValid"
+            :disabled="!isFormValid || isProcessing"
             class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed mb-3"
           >
-            Complete Enrollment
+            <span v-if="isProcessing">Processing...</span>
+            <span v-else>Complete Enrollment</span>
           </button>
 
           <p class="text-xs text-gray-500 text-center">
@@ -350,8 +374,13 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import store from "../store";
+import apiService from "../services/api.js";
 
 const router = useRouter();
+const cartItems = ref([]);
+const isLoading = ref(true);
+const isProcessing = ref(false);
+const error = ref(null);
 
 const form = ref({
   firstName: "",
@@ -372,9 +401,35 @@ const form = ref({
   cvv: "",
 });
 
-const subtotal = computed(() => store.getCartTotal());
+const subtotal = computed(() => {
+  return cartItems.value.reduce(
+    (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
+    0
+  );
+});
 const tax = computed(() => subtotal.value * 0.1);
 const total = computed(() => subtotal.value + tax.value);
+
+const loadCart = async () => {
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    const response = await apiService.getCart();
+    if (response.success && response.data && response.data.items) {
+      cartItems.value = response.data.items;
+    } else {
+      error.value = "Failed to load cart items";
+      cartItems.value = [];
+    }
+  } catch (err) {
+    console.error("Error loading cart:", err);
+    error.value = err.message || "Failed to load cart. Please try again.";
+    cartItems.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const isFormValid = computed(() => {
   return (
@@ -396,24 +451,66 @@ const isFormValid = computed(() => {
   );
 });
 
-const handleCompleteEnrollment = () => {
-  if (isFormValid.value) {
-    alert(
-      `🎉 Enrollment successful!\n\n${form.value.studentFirstName} ${
-        form.value.studentLastName
-      } has been enrolled in ${store.cart.length} class${
-        store.cart.length > 1 ? "es" : ""
-      }!\n\nA confirmation email with class details and schedule has been sent to ${
-        form.value.email
-      }.\n\n(This is a demo - no real payment was processed)`
-    );
-    store.clearCart();
-    router.push("/");
+const handleCompleteEnrollment = async () => {
+  if (!isFormValid.value || isProcessing.value) {
+    return;
+  }
+
+  isProcessing.value = true;
+  error.value = null;
+
+  try {
+    // Prepare checkout data according to backend API format
+    const checkoutData = {
+      student_name: `${form.value.studentFirstName} ${form.value.studentLastName}`,
+      student_age: parseInt(form.value.studentAge),
+      student_grade: form.value.gradeLevel || "",
+      special_notes: form.value.specialNotes || "",
+      payment_method: "card", // Default to card
+      card_number: form.value.cardNumber.replace(/\s/g, ""), // Remove spaces
+      card_expiry: form.value.expiry,
+      card_cvv: form.value.cvv,
+      cardholder_name: `${form.value.firstName} ${form.value.lastName}`,
+    };
+
+    // Call the checkout API
+    const response = await apiService.checkout(checkoutData);
+
+    if (response.success) {
+      // Clear cart from backend (already done by API, but clear local too)
+      store.clearLocalCart();
+      await store.refreshCartCount();
+
+      // Show success message
+      alert(
+        `🎉 Enrollment successful!\n\n${form.value.studentFirstName} ${
+          form.value.studentLastName
+        } has been enrolled in ${response.data.enrollments.length} class${
+          response.data.enrollments.length > 1 ? "es" : ""
+        }!\n\nPayment ID: ${response.data.payment_id}\n\nA confirmation email with class details and schedule has been sent to ${
+          form.value.email
+        }.`
+      );
+
+      // Redirect to home
+      router.push("/");
+    } else {
+      throw new Error(response.message || "Checkout failed");
+    }
+  } catch (err) {
+    console.error("Checkout error:", err);
+    error.value =
+      err.response?.message ||
+      err.message ||
+      "Failed to complete enrollment. Please try again.";
+    alert(error.value);
+  } finally {
+    isProcessing.value = false;
   }
 };
 
 // Redirect if not logged in
-onMounted(() => {
+onMounted(async () => {
   // Check if user is logged in
   const token = localStorage.getItem("token");
   const user =
@@ -430,7 +527,10 @@ onMounted(() => {
 
   // Ensure user data is loaded
   if (!store.isLoggedIn && token) {
-    store.loadUser();
+    await store.loadUser();
   }
+
+  // Load cart items from API
+  await loadCart();
 });
 </script>

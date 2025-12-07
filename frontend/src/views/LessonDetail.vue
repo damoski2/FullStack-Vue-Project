@@ -564,29 +564,39 @@ const handleEnroll = async () => {
   }
 
   try {
-    // Always save to localStorage first
-    store.addToLocalCart(lesson.value.id, quantity.value);
-
-    // If logged in, sync with backend API
+    // If logged in, use backend API as primary source
     if (store.isLoggedIn) {
       try {
         await apiService.addToCart(lesson.value.id, quantity.value);
         // Refresh cart count from API
         await store.refreshCartCount();
+        // Also update localStorage for consistency
+        store.addToLocalCart(lesson.value.id, quantity.value);
+        alert(`${quantity.value} enrollment(s) added to cart!`);
       } catch (apiErr) {
-        console.error("Error syncing cart with API:", apiErr);
-        // Continue anyway - localStorage already saved
+        console.error("Error adding to cart via API:", apiErr);
+        const errorMessage =
+          apiErr.response?.message ||
+          apiErr.message ||
+          "Failed to add to cart. Please try again.";
+        alert(errorMessage);
+        throw apiErr; // Re-throw to prevent success message
       }
+    } else {
+      // Not logged in, use localStorage only
+      store.addToLocalCart(lesson.value.id, quantity.value);
+      alert(`${quantity.value} enrollment(s) added to cart!`);
     }
-
-    alert(`${quantity.value} enrollment(s) added to cart!`);
   } catch (err) {
     console.error("Error adding to cart:", err);
-    const errorMessage =
-      err.response?.data?.message ||
-      err.message ||
-      "Failed to add to cart. Please try again.";
-    alert(errorMessage);
+    // Error already handled above if logged in
+    if (!store.isLoggedIn) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to add to cart. Please try again.";
+      alert(errorMessage);
+    }
   }
 };
 

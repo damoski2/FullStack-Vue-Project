@@ -547,6 +547,67 @@ export const store = reactive({
     this.cartCount = 0;
   },
 
+  async syncLocalCartToBackend() {
+    if (!this.isLoggedIn) {
+      return;
+    }
+
+    try {
+      const localItems = this.loadCartItems();
+      if (localItems.length === 0) {
+        return;
+      }
+
+      // Import apiService dynamically to avoid circular dependency
+      const apiService = (await import("../services/api.js")).default;
+
+      // Get current backend cart
+      const backendCartResponse = await apiService.getCart();
+      const backendItems =
+        backendCartResponse.success && backendCartResponse.data
+          ? backendCartResponse.data.items
+          : [];
+
+      // Create a map of backend cart items by lesson_id
+      const backendCartMap = new Map();
+      backendItems.forEach((item) => {
+        backendCartMap.set(item.lesson_id, item.quantity);
+      });
+
+      // Sync each localStorage item to backend
+      // Only add items that aren't in backend or have different quantities
+      for (const localItem of localItems) {
+        const backendQuantity = backendCartMap.get(localItem.lesson_id) || 0;
+        const localQuantity = localItem.quantity || 0;
+
+        if (localQuantity !== backendQuantity && localQuantity > 0) {
+          // If item exists in backend with different quantity, update it
+          // Otherwise, add it
+          try {
+            if (backendQuantity > 0) {
+              await apiService.updateCartItem(
+                localItem.lesson_id,
+                localQuantity
+              );
+            } else {
+              await apiService.addToCart(localItem.lesson_id, localQuantity);
+            }
+          } catch (err) {
+            console.error(
+              `Failed to sync item ${localItem.lesson_id} to backend:`,
+              err
+            );
+          }
+        }
+      }
+
+      // Refresh cart count after syncing
+      await this.refreshCartCount();
+    } catch (error) {
+      console.error("Failed to sync local cart to backend:", error);
+    }
+  },
+
   async loadUser() {
     const token = localStorage.getItem("token");
     if (token) {
@@ -558,6 +619,8 @@ export const store = reactive({
           this.user = response.data.user;
           this.isLoggedIn = true;
           localStorage.setItem("user", JSON.stringify(response.data.user));
+          // Sync localStorage cart to backend when user loads
+          await this.syncLocalCartToBackend();
           // Refresh cart count when user loads
           await this.refreshCartCount();
         } else {

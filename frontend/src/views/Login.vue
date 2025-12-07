@@ -244,6 +244,9 @@ const handleLogin = async () => {
       store.isLoggedIn = true;
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
+      // Load user (which will sync cart from localStorage to backend)
+      await store.loadUser();
+
       // Redirect to home
       router.push("/");
     } else {
