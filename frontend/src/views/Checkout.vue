@@ -478,6 +478,7 @@ const handleCompleteEnrollment = async () => {
     // Prepare checkout data according to backend API format
     const checkoutData = {
       student_name: `${form.value.studentFirstName} ${form.value.studentLastName}`,
+      phone_number: form.value.phone,
       student_age: parseInt(form.value.studentAge),
       student_grade: form.value.gradeLevel || "",
       special_notes: form.value.specialNotes || "",

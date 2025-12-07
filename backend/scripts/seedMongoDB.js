@@ -4,7 +4,7 @@ import Teacher from "../models/Teacher.js";
 import Lesson from "../models/Lesson.js";
 import User from "../models/User.js";
 import Review from "../models/Review.js";
-import Enrollment from "../models/Enrollment.js";
+import Order from "../models/Order.js";
 import bcrypt from "bcryptjs";
 
 // Sample data extracted from frontend store
@@ -545,7 +545,7 @@ async function seedDatabase() {
     // Clear existing data
     console.log("🧹 Clearing existing data...");
     await Review.deleteMany({});
-    await Enrollment.deleteMany({});
+    await Order.deleteMany({});
     await Lesson.deleteMany({});
     await Teacher.deleteMany({});
     await Category.deleteMany({});
@@ -726,7 +726,7 @@ async function seedDatabase() {
 
       const totalAmount = lesson.price * (Math.floor(Math.random() * 3) + 1); // 1-3 sessions
 
-      await Enrollment.create({
+      await Order.create({
         user_id: randomUserId,
         lesson_id: randomLessonId,
         student_name: randomStudentName,

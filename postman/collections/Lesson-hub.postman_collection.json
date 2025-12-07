@@ -1,0 +1,169 @@
+{
+  "info": {
+    "_postman_id": "8ff69346-373f-4c77-8d14-b2379629ff92",
+    "name": "Lesson-hub",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "12962667"
+  },
+  "item": [
+    {
+      "name": "Create lessons",
+      "id": "ac44ba1e-4a86-4989-b8b1-ebfa70453997",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"title\": \"Piano Lessons for Beginners\",\n    \"category_id\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/lessons",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "lessons"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Category",
+      "id": "a95ea768-3e44-45c8-b245-557e5a86047f",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTI5YzdkMzM1MjE3YzI5YmYxMzJhYWQiLCJpYXQiOjE3NjQ0MjkxNjMsImV4cCI6MTc2NTAzMzk2M30.RBDyie27EUJrgW1RxR3Ruyww0_3N9PupVH1DCiZnS2c",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"Language\",\n    \"description\": \"Lesson Category under section language\",\n    \"icon\": \"🗣️\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/categories",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "categories"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login",
+      "id": "f892a5b7-c437-406d-8857-2e585969b81a",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"email\": \"akogunoyindamola42@gmail.com\",\n    \"password\": \"damodami43\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/auth/login",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Teacher",
+      "id": "4c39e14b-57f8-4593-8070-f7f7689d5ba0",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "id": "52402c7b-d633-428f-87ca-9a71f8cebee0",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://fullstack-vue-project-10x2.onrender.com/api/lessons?available=true&sortBy=createdAt&sortOrder=desc",
+          "protocol": "https",
+          "host": [
+            "fullstack-vue-project-10x2",
+            "onrender",
+            "com"
+          ],
+          "path": [
+            "api",
+            "lessons"
+          ],
+          "query": [
+            {
+              "key": "available",
+              "value": "true"
+            },
+            {
+              "key": "sortBy",
+              "value": "createdAt"
+            },
+            {
+              "key": "sortOrder",
+              "value": "desc"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

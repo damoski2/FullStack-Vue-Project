@@ -1,6 +1,6 @@
 import express from "express";
 import { body, validationResult } from "express-validator";
-import Enrollment from "../models/Enrollment.js";
+import Order from "../models/Order.js";
 import CartItem from "../models/CartItem.js";
 import Lesson from "../models/Lesson.js";
 import Category from "../models/Category.js";
@@ -22,6 +22,12 @@ router.post(
       .trim()
       .isLength({ min: 2 })
       .withMessage("Student name must be at least 2 characters"),
+    body("phone_number")
+      .trim()
+      .isLength({ min: 10 })
+      .withMessage(
+        "Phone number is required and must be at least 10 characters"
+      ),
     body("student_age")
       .isInt({ min: 3, max: 18 })
       .withMessage("Student age must be between 3 and 18"),
@@ -64,6 +70,7 @@ router.post(
 
       const {
         student_name,
+        phone_number,
         student_age,
         student_grade,
         special_notes,
@@ -143,11 +150,12 @@ router.post(
 
       for (const item of validCartItems) {
         const lesson = item.lesson_id;
-        // Create enrollment record
-        const enrollment = await Enrollment.create({
+        // Create order record
+        const order = await Order.create({
           user_id: req.user.id,
           lesson_id: lesson._id,
           student_name,
+          phone_number,
           student_age,
           student_grade,
           special_notes,
@@ -163,7 +171,7 @@ router.post(
         });
 
         enrollments.push({
-          id: enrollment._id.toString(),
+          id: order._id.toString(),
           lesson_id: lesson._id.toString(),
           title: lesson.title,
           quantity: item.quantity,
@@ -176,7 +184,7 @@ router.post(
 
       // In a real application, you would process payment here
       // For demo purposes, we'll mark as paid
-      await Enrollment.updateMany(
+      await Order.updateMany(
         { payment_id },
         { payment_status: "paid", status: "confirmed" }
       );
@@ -220,7 +228,7 @@ router.get("/", authenticateToken, async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const enrollments = await Enrollment.find(filter)
+    const enrollments = await Order.find(filter)
       .populate({
         path: "lesson_id",
         populate: [
@@ -251,7 +259,7 @@ router.get("/", authenticateToken, async (req, res) => {
       enrolled_at: enrollment.enrolled_at || enrollment.createdAt,
     }));
 
-    const total = await Enrollment.countDocuments(filter);
+    const total = await Order.countDocuments(filter);
     const totalPages = Math.ceil(total / parseInt(limit));
 
     res.json({
@@ -284,7 +292,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const enrollment = await Enrollment.findOne({
+    const enrollment = await Order.findOne({
       _id: id,
       user_id: req.user.id,
     })
@@ -351,8 +359,8 @@ router.put(
       const { id } = req.params;
       const { reason } = req.body;
 
-      // Check if enrollment exists and belongs to user
-      const enrollment = await Enrollment.findOne({
+      // Check if order exists and belongs to user
+      const enrollment = await Order.findOne({
         _id: id,
         user_id: req.user.id,
       });
@@ -408,7 +416,7 @@ router.put(
 // @access  Private
 router.get("/summary", authenticateToken, async (req, res) => {
   try {
-    const enrollments = await Enrollment.find({ user_id: req.user.id });
+    const enrollments = await Order.find({ user_id: req.user.id });
 
     const summary = {
       total_enrollments: enrollments.length,

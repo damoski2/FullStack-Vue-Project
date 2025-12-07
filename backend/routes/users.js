@@ -1,7 +1,7 @@
 import express from "express";
 import { body, validationResult } from "express-validator";
 import User from "../models/User.js";
-import Enrollment from "../models/Enrollment.js";
+import Order from "../models/Order.js";
 import Review from "../models/Review.js";
 import Lesson from "../models/Lesson.js";
 import Category from "../models/Category.js";
@@ -60,7 +60,7 @@ router.get("/profile", authenticateToken, async (req, res) => {
 // @access  Private
 router.get("/enrollments", authenticateToken, async (req, res) => {
   try {
-    const enrollments = await Enrollment.find({ user_id: req.user.id })
+    const enrollments = await Order.find({ user_id: req.user.id })
       .populate({
         path: "lesson_id",
         populate: [
@@ -171,7 +171,7 @@ router.post(
       const { lesson_id, rating, comment } = req.body;
 
       // Check if user is enrolled in this lesson
-      const enrollment = await Enrollment.findOne({
+      const enrollment = await Order.findOne({
         user_id: req.user.id,
         lesson_id: lesson_id,
         status: { $in: ["confirmed", "completed"] },
@@ -247,17 +247,17 @@ router.post(
 router.get("/dashboard", authenticateToken, async (req, res) => {
   try {
     // Get user stats
-    const totalEnrollments = await Enrollment.countDocuments({
+    const totalEnrollments = await Order.countDocuments({
       user_id: req.user.id,
     });
-    const activeEnrollments = await Enrollment.countDocuments({
+    const activeEnrollments = await Order.countDocuments({
       user_id: req.user.id,
       status: "confirmed",
     });
     const totalReviews = await Review.countDocuments({
       user_id: req.user.id,
     });
-    const paidEnrollments = await Enrollment.find({
+    const paidEnrollments = await Order.find({
       user_id: req.user.id,
       payment_status: "paid",
     });
@@ -274,7 +274,7 @@ router.get("/dashboard", authenticateToken, async (req, res) => {
     };
 
     // Get recent enrollments
-    const recentEnrollments = await Enrollment.find({ user_id: req.user.id })
+    const recentEnrollments = await Order.find({ user_id: req.user.id })
       .populate({
         path: "lesson_id",
         populate: { path: "category_id", select: "name" },
@@ -293,7 +293,7 @@ router.get("/dashboard", authenticateToken, async (req, res) => {
     }));
 
     // Get upcoming lessons (if any)
-    const upcomingLessons = await Enrollment.find({
+    const upcomingLessons = await Order.find({
       user_id: req.user.id,
       status: "confirmed",
     })

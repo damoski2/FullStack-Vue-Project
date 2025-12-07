@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const enrollmentSchema = new mongoose.Schema(
+const orderSchema = new mongoose.Schema(
   {
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -13,6 +13,11 @@ const enrollmentSchema = new mongoose.Schema(
       required: true,
     },
     student_name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    phone_number: {
       type: String,
       required: true,
       trim: true,
@@ -69,9 +74,9 @@ const enrollmentSchema = new mongoose.Schema(
   }
 );
 
-enrollmentSchema.index({ user_id: 1 });
-enrollmentSchema.index({ lesson_id: 1 });
-enrollmentSchema.index({ status: 1 });
+orderSchema.index({ user_id: 1 });
+orderSchema.index({ lesson_id: 1 });
+orderSchema.index({ status: 1 });
+orderSchema.index({ payment_id: 1 }); // For grouping orders
 
-export default mongoose.model("Enrollment", enrollmentSchema);
-
+export default mongoose.model("Order", orderSchema);

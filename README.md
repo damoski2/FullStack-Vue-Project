@@ -1,339 +1,408 @@
-# AfterSchool Hub - Complete Full-Stack Application
+# AfterSchool Hub - Full-Stack Application Submission
 
-A comprehensive after-school classes marketplace platform built with Vue.js frontend and Node.js/Express backend.
+A comprehensive after-school classes marketplace platform built with Vue.js frontend and Node.js/Express backend with MongoDB Atlas.
 
-## 🎯 Project Overview
+## 📋 Submission Information
 
-AfterSchool Hub is a full-stack web application that connects parents with quality after-school programs for their children. The platform features a modern Vue.js frontend with a robust Node.js/Express backend API.
+### Repository Links
 
-### Key Features
-- **Frontend**: Vue.js 3 with Composition API, Tailwind CSS, Vue Router
-- **Backend**: Node.js/Express with SQLite database
-- **Authentication**: JWT-based authentication system
-- **Database**: SQLite with comprehensive schema
-- **File Upload**: Image upload support for lessons
-- **Payment Ready**: Integration-ready payment system
-- **Responsive Design**: Mobile-first responsive design
+#### Vue.js App
+- **GitHub Repository**: https://github.com/damoski2/FullStack-Vue-Project.git
+- **GitHub Pages**: https://afterschool-hub-frontend.onrender.com/
 
-## 📁 Project Structure
+#### Express.js App
+- **GitHub Repository**: https://github.com/damoski2/FullStack-Vue-Project.git
+- **Deployed API (Render.com)**: https://fullstack-vue-project-10x2.onrender.com/api
+
+### API Endpoint for All Lessons
+
+The following endpoint returns all lessons from the deployed Express.js application:
+
+**GET** `https://fullstack-vue-project-10x2.onrender.com/api/lessons`
+
+This endpoint returns a JSON response with all available lessons including:
+- Lesson details (title, description, price, duration, schedule)
+- Teacher information
+- Category information
+- Enrollment data (students enrolled, max students)
+- Ratings and reviews
+
+Example response structure:
+```json
+{
+  "success": true,
+  "data": {
+    "lessons": [
+      {
+        "id": "...",
+        "title": "Piano Lessons for Beginners",
+        "price": 45,
+        "category_name": "Music",
+        "teacher_name": "Sarah Johnson",
+        ...
+      }
+    ],
+    "pagination": {
+      "totalItems": 12,
+      "totalPages": 1
+    }
+  }
+}
+```
+
+## 📦 Project Structure
 
 ```
 sem1-project/
-├── src/                          # Vue.js frontend
-│   ├── components/               # Vue components
-│   ├── views/                    # Page components
-│   ├── router/                   # Vue Router configuration
-│   ├── store/                    # State management
-│   └── assets/                   # Static assets
-├── server/                       # Node.js backend
-│   ├── config/                   # Database configuration
-│   ├── middleware/                # Express middleware
-│   ├── routes/                   # API routes
-│   ├── scripts/                  # Database seeding
-│   └── uploads/                  # File uploads
-├── public/                       # Static files
-├── package.json                  # Frontend dependencies
-├── server/package.json           # Backend dependencies
-└── start-backend.sh              # Backend startup script
+├── frontend/                    # Vue.js Application
+│   ├── src/
+│   │   ├── components/         # Vue components
+│   │   ├── views/               # Page components
+│   │   ├── router/              # Vue Router configuration
+│   │   ├── store/               # State management
+│   │   ├── services/            # API service layer
+│   │   └── assets/              # Static assets
+│   ├── public/                  # Public static files
+│   ├── package.json             # Frontend dependencies
+│   └── vite.config.js           # Vite configuration
+│
+├── backend/                     # Express.js Application
+│   ├── config/                  # Database configuration
+│   │   └── mongo.js             # MongoDB connection
+│   ├── middleware/              # Express middleware
+│   │   ├── auth.js              # Authentication middleware
+│   │   ├── errorHandler.js      # Error handling
+│   │   └── upload.js            # File upload handling
+│   ├── models/                  # MongoDB Mongoose models
+│   │   ├── User.js
+│   │   ├── Lesson.js
+│   │   ├── Category.js
+│   │   ├── Teacher.js
+│   │   ├── CartItem.js
+│   │   ├── Enrollment.js
+│   │   └── Review.js
+│   ├── routes/                  # API routes
+│   │   ├── auth.js              # Authentication routes
+│   │   ├── lessons.js           # Lessons CRUD routes
+│   │   ├── cart.js              # Cart management routes
+│   │   ├── enrollment.js        # Enrollment/checkout routes
+│   │   ├── categories.js        # Category routes
+│   │   └── users.js             # User management routes
+│   ├── scripts/                 # Database scripts
+│   │   ├── seedMongoDB.js       # MongoDB seeding script
+│   │   └── migrateViaAPI.js     # Migration script
+│   ├── uploads/                 # File upload directory
+│   ├── server.js                # Main server file
+│   └── package.json             # Backend dependencies
+│
+├── README.md                    # This file
+└── [MongoDB Collections]       # Exported collections (see below)
 ```
 
-## 🚀 Quick Start
+## 🗄️ MongoDB Atlas Collections
+
+The following collections are exported from MongoDB Atlas and included in the submission:
+
+### 1. **lessons** Collection
+Contains all lesson/class data including:
+- Lesson details (title, description, price, duration, schedule)
+- Category and teacher references
+- Enrollment information (students_enrolled, max_students)
+- Availability status
+- Ratings and reviews count
+- Images and features
+
+**Export Location**: `[Include path to exported lessons collection JSON file]`
+
+### 2. **orders** Collection
+Contains all enrollment/order records with the following **required minimal fields**:
+
+#### Required Fields (as per module requirements):
+- ✅ **name** (`student_name`): Student's full name
+- ✅ **phone number** (`phone_number`): Contact phone number
+- ✅ **lesson IDs** (`lesson_id`): Reference to lesson(s) - see note below
+- ✅ **number of spaces** (`quantity`): Number of spaces/spots enrolled
+
+#### Additional Fields:
+- `user_id`: Reference to the user who placed the order
+- `student_age`: Student's age
+- `student_grade`: Student's grade level
+- `special_notes`: Special requirements or notes
+- `total_amount`: Total cost for this enrollment
+- `payment_id`: Unique identifier grouping multiple enrollments into one order
+- `payment_method`: Payment method used (card, paypal, bank_transfer)
+- `payment_status`: Payment status (pending, paid, failed, refunded)
+- `status`: Enrollment status (pending, confirmed, cancelled, completed)
+- `enrolled_at`: Timestamp of enrollment
+- `created_at`, `updated_at`: Automatic timestamps
+
+**Order Structure Design**:
+When a user checks out with multiple different lessons, the system creates **one enrollment record per lesson**, all sharing the same `payment_id`. This `payment_id` groups them into a single order. For example:
+- Order with `payment_id: "abc-123"` contains:
+  - Enrollment 1: `lesson_id: "lesson1"`, `quantity: 2` (2 spaces)
+  - Enrollment 2: `lesson_id: "lesson2"`, `quantity: 1` (1 space)
+  
+This design allows:
+- ✅ Multiple lesson IDs per order (via shared `payment_id`)
+- ✅ Individual quantity tracking per lesson
+- ✅ Flexible querying (by order via `payment_id` or by lesson via `lesson_id`)
+- ✅ Proper normalization and data integrity
+
+**Export Location**: `[Include path to exported orders collection JSON file]`
+
+**Note**: The `orders` collection stores all order records. To retrieve a complete order with multiple lessons, query all orders with the same `payment_id`.
+
+### Collection Export Instructions
+Collections were exported using MongoDB Compass:
+1. Connected to MongoDB Atlas cluster
+2. Selected the database
+3. Right-clicked on each collection
+4. Selected "Export Collection"
+5. Exported as JSON format
+6. Included in submission zip file
+
+## 📮 Postman Collection
+
+A complete Postman collection is included in the submission with all API endpoints configured and tested.
+
+**Postman Collection Location**: `[Include path to exported Postman collection JSON file]`
+
+### Included API Requests
+
+#### Authentication
+- POST Register User
+- POST Login User
+- GET Current User
+- PUT Update Profile
+- POST Logout
+
+#### Lessons
+- GET All Lessons
+- GET Lesson by ID
+- GET Categories
+- GET Featured Lessons
+- POST Create Lesson (Teacher/Admin)
+- PUT Update Lesson (Teacher/Admin)
+- DELETE Lesson (Admin)
+
+#### Cart Management
+- GET User Cart
+- POST Add to Cart
+- PUT Update Cart Item
+- DELETE Remove from Cart
+- DELETE Clear Cart
+- GET Cart Count
+
+#### Enrollments
+- POST Checkout/Process Enrollment
+- GET User Enrollments
+- GET Enrollment by ID
+- PUT Cancel Enrollment
+- GET Enrollment Summary
+
+#### Users
+- GET User Profile
+- GET User Enrollments
+- GET User Reviews
+- POST Add Review
+- GET User Dashboard
+
+### Postman Export Instructions
+The collection was exported from Postman:
+1. Opened Postman application
+2. Selected the collection
+3. Clicked "..." menu
+4. Selected "Export"
+5. Chose "Collection v2.1" format
+6. Exported as JSON file
+7. Included in submission zip file
+
+## 🚀 Quick Start Guide
 
 ### Prerequisites
 - Node.js v20.19.0 or higher
 - npm or yarn
+- MongoDB Atlas account (for production)
+- Git
 
-### Installation
+### Local Development Setup
 
-1. **Clone and navigate to the project:**
+1. **Clone the repository:**
    ```bash
+   git clone [repository-url]
    cd sem1-project
    ```
 
 2. **Install frontend dependencies:**
    ```bash
+   cd frontend
    npm install
    ```
 
 3. **Install backend dependencies:**
    ```bash
-   npm run backend:install
+   cd ../backend
+   npm install
    ```
 
-4. **Set up backend environment:**
-   ```bash
-   cd server
-   cp .env.example .env
-   # Edit .env with your configuration
-   cd ..
+4. **Set up environment variables:**
+   
+   Create `backend/.env`:
+   ```env
+   PORT=5000
+   NODE_ENV=development
+   FRONTEND_URL=http://localhost:5173
+   JWT_SECRET=your-super-secret-jwt-key
+   JWT_EXPIRE=7d
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/afterschool_hub
+   ```
+
+   Create `frontend/.env`:
+   ```env
+   VITE_API_BASE_URL=http://localhost:5000/api
    ```
 
 5. **Seed the database:**
    ```bash
-   npm run backend:seed
+   cd backend
+   npm run seed
    ```
 
-6. **Start both frontend and backend:**
-   ```bash
-   npm run full:dev
-   ```
-
-   Or start them separately:
-   ```bash
-   # Terminal 1 - Frontend
-   npm run dev
+6. **Start the development servers:**
    
-   # Terminal 2 - Backend
-   npm run backend:dev
+   Terminal 1 (Backend):
+   ```bash
+   cd backend
+   npm run dev
+   ```
+   
+   Terminal 2 (Frontend):
+   ```bash
+   cd frontend
+   npm run dev
    ```
 
-### Access the Application
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:3000
-- **API Health Check**: http://localhost:3000/health
+7. **Access the application:**
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:5000/api
 
-## 🔧 Available Scripts
+## 🎯 Key Features
 
-### Frontend Scripts
-- `npm run dev` - Start frontend development server
-- `npm run build` - Build frontend for production
-- `npm run preview` - Preview production build
+### Frontend (Vue.js)
+- ✅ Modern Vue.js 3 with Composition API
+- ✅ Responsive design with Tailwind CSS
+- ✅ Vue Router for navigation
+- ✅ State management with reactive store
+- ✅ Cart persistence with backend sync
+- ✅ User authentication flow
+- ✅ Lesson browsing and filtering
+- ✅ Checkout and enrollment process
+- ✅ Mobile-first responsive design
 
-### Backend Scripts
-- `npm run backend:install` - Install backend dependencies
-- `npm run backend:dev` - Start backend development server
-- `npm run backend:start` - Start backend production server
-- `npm run backend:seed` - Seed database with sample data
-- `npm run backend:setup` - Run backend setup script
+### Backend (Express.js)
+- ✅ RESTful API with Express.js
+- ✅ MongoDB Atlas integration with Mongoose
+- ✅ JWT-based authentication
+- ✅ Role-based access control
+- ✅ File upload support
+- ✅ Input validation with express-validator
+- ✅ Error handling middleware
+- ✅ CORS configuration
+- ✅ Cart and enrollment management
+- ✅ Lesson spaces tracking
 
-### Full-Stack Scripts
-- `npm run full:dev` - Start both frontend and backend
-- `npm run full:build` - Build both frontend and backend
-
-## 🎨 Frontend Features
-
-### Pages & Components
-- **Home Page**: Browse lessons with category filtering
-- **Lesson Detail**: Detailed lesson information and enrollment
-- **Cart**: Manage selected lessons
-- **Checkout**: Complete enrollment process
-- **Authentication**: Login and registration
-- **Responsive Design**: Mobile-first approach
-
-### State Management
-- Vue 3 Composition API with reactive store
-- Cart management with localStorage persistence
-- User authentication state
-- Lesson data management
-
-### Styling
-- Tailwind CSS for utility-first styling
-- Responsive design with mobile breakpoints
-- Modern UI components with hover effects
-- Consistent color scheme and typography
-
-## 🔌 Backend API Features
-
-### Authentication System
-- JWT-based authentication
-- Password hashing with bcrypt
-- Role-based access control
-- User profile management
-
-### Database Schema
-- **Users**: User accounts and profiles
-- **Teachers**: Instructor information
-- **Categories**: Lesson categories
-- **Lessons**: Course information
-- **Cart Items**: Shopping cart management
-- **Enrollments**: Student enrollments
-- **Reviews**: User reviews and ratings
-
-### API Endpoints
-- **Authentication**: `/api/auth/*`
-- **Lessons**: `/api/lessons/*`
-- **Cart**: `/api/cart/*`
-- **Enrollments**: `/api/enrollments/*`
-- **Users**: `/api/users/*`
-
-### Security Features
-- CORS configuration
-- Rate limiting
-- Security headers with Helmet
-- Input validation
-- File upload security
-
-## 🗄️ Database
-
-### Sample Data
-The database comes pre-seeded with:
-- 8 categories (Music, Math, Science, Sports, Art, Technology, Language, Dance)
-- 12 teachers with detailed profiles
-- 12 sample lessons across all categories
-- 4 test users (including admin account)
-
-### Test Accounts
-- **Parent**: john@example.com / password123
-- **Admin**: admin@afterschoolhub.com / admin123
+### Database (MongoDB Atlas)
+- ✅ User management
+- ✅ Lesson catalog
+- ✅ Category organization
+- ✅ Teacher profiles
+- ✅ Cart items persistence
+- ✅ Enrollment/order tracking
+- ✅ Review system
 
 ## 🔐 Authentication
 
-### User Roles
-- **parent** - Browse and enroll children
-- **student** - Same as parent (for older students)
-- **teacher** - Create and manage lessons
-- **admin** - Full system access
+The application uses JWT (JSON Web Tokens) for authentication. Users can register and login to access protected features.
 
-### JWT Tokens
-- Secure token-based authentication
-- Configurable expiration time
-- Automatic token validation
-
-## 📱 Responsive Design
-
-### Breakpoints
-- **Mobile**: < 640px (Single column)
-- **Tablet**: 640px - 1024px (2 columns)
-- **Desktop**: > 1024px (3-4 columns)
-
-### Features
-- Mobile-first design approach
-- Touch-friendly interface
-- Optimized images and loading
-- Smooth animations and transitions
-
-## 🛠️ Development
-
-### Frontend Development
-```bash
-npm run dev
-```
-- Hot module replacement
-- Vue DevTools integration
-- Tailwind CSS compilation
-- TypeScript support ready
-
-### Backend Development
-```bash
-npm run backend:dev
-```
-- Nodemon for auto-restart
-- SQLite database
-- File upload handling
-- Comprehensive logging
-
-### Database Management
-```bash
-npm run backend:seed
-```
-- Reset and seed database
-- Sample data generation
-- Test user creation
-
-## 🚀 Production Deployment
-
-### Frontend Deployment
-1. Build the frontend: `npm run build`
-2. Deploy `dist/` folder to your hosting service
-3. Configure environment variables
-
-### Backend Deployment
-1. Set production environment variables
-2. Use production database (PostgreSQL/MySQL)
-3. Configure proper JWT secrets
-4. Set up file storage (AWS S3, etc.)
-5. Deploy to cloud platform (Heroku, AWS, etc.)
-
-### Environment Variables
-```env
-# Backend (.env)
-PORT=3000
-NODE_ENV=production
-FRONTEND_URL=https://yourdomain.com
-JWT_SECRET=your-production-secret
-JWT_EXPIRE=7d
-DB_PATH=./database/afterschool_hub.db
-```
+### Test Accounts (after seeding)
+- **Parent**: john@example.com / password123
+- **Admin**: admin@afterschoolhub.com / admin123
 
 ## 📊 API Documentation
 
-### Authentication Flow
-1. Register/Login to get JWT token
-2. Include token in Authorization header
-3. Access protected endpoints
+### Base URL
+- **Local**: http://localhost:5000/api
+- **Production**: https://fullstack-vue-project-10x2.onrender.com/api
 
-### Example API Calls
-```bash
-# Register user
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"John Doe","email":"john@example.com","password":"password123"}'
+### Main Endpoints
 
-# Get lessons
-curl http://localhost:3000/api/lessons
+#### Lessons
+- `GET /api/lessons` - Get all lessons (with filtering, pagination)
+- `GET /api/lessons/:id` - Get single lesson details
+- `GET /api/lessons/categories` - Get all categories
+- `GET /api/lessons/featured` - Get featured lessons
 
-# Add to cart (requires auth)
-curl -X POST http://localhost:3000/api/cart/add \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"lesson_id":1,"quantity":1}'
-```
+#### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - User login
+- `GET /api/auth/me` - Get current user
 
-## 🧪 Testing
+#### Cart
+- `GET /api/cart` - Get user's cart
+- `POST /api/cart/add` - Add item to cart
+- `PUT /api/cart/update` - Update cart item quantity
+- `DELETE /api/cart/remove` - Remove item from cart
 
-### Manual Testing
-1. Use test accounts provided
-2. Test all user flows
-3. Verify responsive design
-4. Test API endpoints
+#### Enrollments
+- `POST /api/enrollments/checkout` - Process enrollment checkout
+- `GET /api/enrollments` - Get user's enrollments
+- `GET /api/enrollments/:id` - Get enrollment details
 
-### Health Checks
-- Frontend: http://localhost:5173
-- Backend: http://localhost:3000/health
+## 🛠️ Technology Stack
 
-## 🔄 Database Management
+### Frontend
+- Vue.js 3 (Composition API)
+- Vue Router 4
+- Tailwind CSS
+- Vite
+- Axios (via fetch API)
 
-### Backup Database
-```bash
-cp server/database/afterschool_hub.db backup/
-```
+### Backend
+- Node.js
+- Express.js
+- MongoDB Atlas
+- Mongoose ODM
+- JWT (jsonwebtoken)
+- bcrypt
+- express-validator
+- multer (file uploads)
 
-### Reset Database
-```bash
-npm run backend:seed
-```
+## 📝 Submission Checklist
 
-### Add New Data
-- Modify `server/scripts/seedDatabase.js`
-- Run seeding script
-- Update API endpoints if needed
+- ✅ Vue.js App code in `frontend/` folder
+- ✅ Express.js App code in `backend/` folder (without node_modules)
+- ✅ README.md with all required links
+- ✅ MongoDB collections exported (lessons, enrollments)
+- ✅ Postman collection exported
+- ✅ All code properly organized
+- ✅ Submission zip file under 10MB
 
-## 🤝 Contributing
+## 🔗 Important Links Summary
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+- **Vue.js GitHub Repository**: [Your Vue.js App GitHub Repository URL]
+- **Vue.js GitHub Pages**: [Your Vue.js App GitHub Pages URL]
+- **Express.js GitHub Repository**: [Your Express.js App GitHub Repository URL]
+- **Express.js API (Render.com)**: https://fullstack-vue-project-10x2.onrender.com/api
+- **Lessons Endpoint**: https://fullstack-vue-project-10x2.onrender.com/api/lessons
 
 ## 📄 License
 
 This project is licensed under the MIT License.
 
-## 🆘 Support
-
-### Common Issues
-- **Port conflicts**: Change ports in configuration
-- **Database errors**: Run `npm run backend:seed`
-- **CORS issues**: Check FRONTEND_URL in .env
-- **File uploads**: Ensure uploads directory exists
-
-### Getting Help
-- Check the README files
-- Review API documentation
-- Check console logs for errors
-- Create an issue in the repository
-
 ---
 
 **AfterSchool Hub** - Empowering after-school education with modern technology! 🎓✨
+
+**Submission Date**: [Date]
+**Student Name**: [Your Name]
+**Course**: [Course Name]
