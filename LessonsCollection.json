@@ -1,0 +1,456 @@
+[{
+  "_id": {
+    "$oid": "692caa9ecbfaf3a4f494254a"
+  },
+  "title": "Piano Lessons for Beginners",
+  "category_id": {
+    "$oid": "692b0ed0c9c9ad026d8cf693"
+  },
+  "teacher_id": {
+    "$oid": "692caa9acbfaf3a4f4942503"
+  },
+  "price": 45,
+  "price_unit": "hour",
+  "rating": 0,
+  "reviews": 0,
+  "duration": "1 hour",
+  "schedule": "Mon & Wed, 4:00 PM",
+  "age_group": "8-16",
+  "students_enrolled": 0,
+  "max_students": 20,
+  "description": "Learn piano from scratch with fun, engaging lessons tailored to your pace. Perfect for beginners who want to develop strong fundamentals.",
+  "image": "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=500&q=80",
+  "features": [
+    "Individual attention",
+    "Music theory basics",
+    "Performance skills",
+    "Practice materials included"
+  ],
+  "featured": true,
+  "available": true,
+  "createdAt": {
+    "$date": "2025-11-30T20:35:42.713Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-30T20:35:42.713Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "692caa9ecbfaf3a4f4942551"
+  },
+  "title": "Advanced Math & Problem Solving",
+  "category_id": {
+    "$oid": "692b0f03c9c9ad026d8cf697"
+  },
+  "teacher_id": {
+    "$oid": "692caa9acbfaf3a4f4942509"
+  },
+  "price": 55,
+  "price_unit": "hour",
+  "rating": 0,
+  "reviews": 0,
+  "duration": "1.5 hours",
+  "schedule": "Tue & Thu, 5:00 PM",
+  "age_group": "11-16",
+  "students_enrolled": 0,
+  "max_students": 15,
+  "description": "Boost your math skills with challenging problems and advanced concepts. Prepare for competitions and excel in school mathematics.",
+  "image": "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=500&q=80",
+  "features": [
+    "Competition preparation",
+    "Advanced problem solving",
+    "Small group sessions",
+    "Weekly homework support"
+  ],
+  "featured": false,
+  "available": true,
+  "createdAt": {
+    "$date": "2025-11-30T20:35:42.904Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-30T20:35:42.904Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "692caa9fcbfaf3a4f4942558"
+  },
+  "title": "Creative Art & Drawing",
+  "category_id": {
+    "$oid": "692b0f4cc9c9ad026d8cf6a3"
+  },
+  "teacher_id": {
+    "$oid": "692caa9bcbfaf3a4f494250f"
+  },
+  "price": 40,
+  "price_unit": "session",
+  "rating": 0,
+  "reviews": 0,
+  "duration": "2 hours",
+  "schedule": "Saturdays, 10:00 AM",
+  "age_group": "5-13",
+  "students_enrolled": 0,
+  "max_students": 12,
+  "description": "Unleash your creativity with various art techniques including drawing, painting, and mixed media. All materials provided!",
+  "image": "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=500&q=80",
+  "features": [
+    "All materials included",
+    "Various art techniques",
+    "Portfolio development",
+    "Art history exploration"
+  ],
+  "featured": true,
+  "available": true,
+  "createdAt": {
+    "$date": "2025-11-30T20:35:43.036Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-30T20:35:43.036Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "692caa9fcbfaf3a4f494255f"
+  },
+  "title": "Soccer Skills Academy",
+  "category_id": {
+    "$oid": "692caa96cbfaf3a4f49424cc"
+  },
+  "teacher_id": {
+    "$oid": "692caa9bcbfaf3a4f4942515"
+  },
+  "price": 35,
+  "price_unit": "session",
+  "rating": 0,
+  "reviews": 0,
+  "duration": "1.5 hours",
+  "schedule": "Mon, Wed & Fri, 4:30 PM",
+  "age_group": "7-14",
+  "students_enrolled": 0,
+  "max_students": 25,
+  "description": "Develop soccer skills, teamwork, and fitness in a fun and supportive environment. All skill levels welcome!",
+  "image": "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=500&q=80",
+  "features": [
+    "Professional coaching",
+    "Team building activities",
+    "Match preparation",
+    "Fitness training"
+  ],
+  "featured": false,
+  "available": true,
+  "createdAt": {
+    "$date": "2025-11-30T20:35:43.164Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-30T20:35:43.164Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "692caa9fcbfaf3a4f4942566"
+  },
+  "title": "Spanish for Kids",
+  "category_id": {
+    "$oid": "692b0f7ac9c9ad026d8cf6ab"
+  },
+  "teacher_id": {
+    "$oid": "692caa9ccbfaf3a4f494251b"
+  },
+  "price": 38,
+  "price_unit": "hour",
+  "rating": 0,
+  "reviews": 0,
+  "duration": "1 hour",
+  "schedule": "Tue & Thu, 4:00 PM",
+  "age_group": "5-12",
+  "students_enrolled": 0,
+  "max_students": 15,
+  "description": "Learn Spanish through games, songs, and interactive activities. Build confidence in speaking and understanding Spanish!",
+  "image": "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=500&q=80",
+  "features": [
+    "Interactive learning",
+    "Cultural activities",
+    "Conversational practice",
+    "Fun learning games"
+  ],
+  "featured": false,
+  "available": true,
+  "createdAt": {
+    "$date": "2025-11-30T20:35:43.280Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-30T20:35:43.280Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "692caa9fcbfaf3a4f494256d"
+  },
+  "title": "Science Explorers Lab",
+  "category_id": {
+    "$oid": "692b0f1ec9c9ad026d8cf69b"
+  },
+  "teacher_id": {
+    "$oid": "692caa9ccbfaf3a4f4942521"
+  },
+  "price": 50,
+  "price_unit": "session",
+  "rating": 0,
+  "reviews": 0,
+  "duration": "2 hours",
+  "schedule": "Fridays, 4:00 PM",
+  "age_group": "8-14",
+  "students_enrolled": 0,
+  "max_students": 16,
+  "description": "Hands-on science experiments exploring physics, chemistry, and biology. Spark curiosity and love for science!",
+  "image": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=500&q=80",
+  "features": [
+    "Hands-on experiments",
+    "Safety equipment provided",
+    "Science fair preparation",
+    "Lab report writing"
+  ],
+  "featured": true,
+  "available": true,
+  "createdAt": {
+    "$date": "2025-11-30T20:35:43.403Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-30T20:35:43.403Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "692caa9fcbfaf3a4f4942574"
+  },
+  "title": "Coding & Game Development",
+  "category_id": {
+    "$oid": "692b0f62c9c9ad026d8cf6a7"
+  },
+  "teacher_id": {
+    "$oid": "692caa9dcbfaf3a4f4942527"
+  },
+  "price": 60,
+  "price_unit": "hour",
+  "rating": 0,
+  "reviews": 0,
+  "duration": "1.5 hours",
+  "schedule": "Wed & Sat, 3:00 PM",
+  "age_group": "10-17",
+  "students_enrolled": 0,
+  "max_students": 12,
+  "description": "Learn to code and create your own games using Python and Scratch. Perfect for future programmers and game designers!",
+  "image": "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=500&q=80",
+  "features": [
+    "Python & Scratch",
+    "Game design fundamentals",
+    "Portfolio projects",
+    "Computer science concepts"
+  ],
+  "featured": false,
+  "available": true,
+  "createdAt": {
+    "$date": "2025-11-30T20:35:43.524Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-30T20:35:43.524Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "692caa9fcbfaf3a4f494257b"
+  },
+  "title": "Ballet & Contemporary Dance",
+  "category_id": {
+    "$oid": "692caa96cbfaf3a4f49424d9"
+  },
+  "teacher_id": {
+    "$oid": "692caa9dcbfaf3a4f494252d"
+  },
+  "price": 42,
+  "price_unit": "session",
+  "rating": 0,
+  "reviews": 0,
+  "duration": "1.5 hours",
+  "schedule": "Mon & Wed, 5:30 PM",
+  "age_group": "6-14",
+  "students_enrolled": 0,
+  "max_students": 18,
+  "description": "Develop grace, strength, and expression through classical ballet and contemporary dance techniques.",
+  "image": "https://images.unsplash.com/photo-1508807526345-15e9b5f4eaff?w=500&q=80",
+  "features": [
+    "Classical technique",
+    "Performance opportunities",
+    "Flexibility training",
+    "Recital preparation"
+  ],
+  "featured": false,
+  "available": true,
+  "createdAt": {
+    "$date": "2025-11-30T20:35:43.636Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-30T20:35:43.636Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "692caa9fcbfaf3a4f4942582"
+  },
+  "title": "Guitar Masterclass",
+  "category_id": {
+    "$oid": "692b0ed0c9c9ad026d8cf693"
+  },
+  "teacher_id": {
+    "$oid": "692caa9dcbfaf3a4f4942533"
+  },
+  "price": 48,
+  "price_unit": "hour",
+  "rating": 0,
+  "reviews": 0,
+  "duration": "1 hour",
+  "schedule": "Tue & Thu, 6:00 PM",
+  "age_group": "10-17",
+  "students_enrolled": 0,
+  "max_students": 15,
+  "description": "Master the guitar with lessons in rock, blues, and classical styles. Learn chords, solos, and songwriting!",
+  "image": "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=500&q=80",
+  "features": [
+    "Multiple music styles",
+    "Songwriting basics",
+    "Music reading",
+    "Performance techniques"
+  ],
+  "featured": false,
+  "available": true,
+  "createdAt": {
+    "$date": "2025-11-30T20:35:43.749Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-30T20:35:43.749Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "692caa9fcbfaf3a4f4942589"
+  },
+  "title": "Creative Writing Workshop",
+  "category_id": {
+    "$oid": "692b0f7ac9c9ad026d8cf6ab"
+  },
+  "teacher_id": {
+    "$oid": "692caa9dcbfaf3a4f4942539"
+  },
+  "price": 44,
+  "price_unit": "session",
+  "rating": 0,
+  "reviews": 0,
+  "duration": "2 hours",
+  "schedule": "Saturdays, 2:00 PM",
+  "age_group": "11-16",
+  "students_enrolled": 7,
+  "max_students": 12,
+  "description": "Develop storytelling skills, creative expression, and writing techniques. Perfect for aspiring young authors!",
+  "image": "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=500&q=80",
+  "features": [
+    "Story development",
+    "Character building",
+    "Publishing guidance",
+    "Peer feedback sessions"
+  ],
+  "featured": false,
+  "available": true,
+  "createdAt": {
+    "$date": "2025-11-30T20:35:43.862Z"
+  },
+  "updatedAt": {
+    "$date": "2025-12-07T17:05:20.312Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "692caa9fcbfaf3a4f4942590"
+  },
+  "title": "Robotics & Engineering",
+  "category_id": {
+    "$oid": "692b0f62c9c9ad026d8cf6a7"
+  },
+  "teacher_id": {
+    "$oid": "692caa9ecbfaf3a4f494253f"
+  },
+  "price": 65,
+  "price_unit": "session",
+  "rating": 0,
+  "reviews": 0,
+  "duration": "2 hours",
+  "schedule": "Thursdays, 4:00 PM",
+  "age_group": "12-17",
+  "students_enrolled": 0,
+  "max_students": 14,
+  "description": "Build and program robots! Learn engineering principles, coding, and problem-solving with hands-on projects.",
+  "image": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=500&q=80",
+  "features": [
+    "Robot building",
+    "Programming basics",
+    "Competition prep",
+    "Engineering concepts"
+  ],
+  "featured": true,
+  "available": true,
+  "createdAt": {
+    "$date": "2025-11-30T20:35:43.978Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-30T20:35:43.978Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "692caaa0cbfaf3a4f4942597"
+  },
+  "title": "Tennis Academy",
+  "category_id": {
+    "$oid": "692caa96cbfaf3a4f49424cc"
+  },
+  "teacher_id": {
+    "$oid": "692caa9ecbfaf3a4f4942545"
+  },
+  "price": 52,
+  "price_unit": "hour",
+  "rating": 0,
+  "reviews": 0,
+  "duration": "1 hour",
+  "schedule": "Mon, Wed & Fri, 5:00 PM",
+  "age_group": "8-16",
+  "students_enrolled": 3,
+  "max_students": 20,
+  "description": "Improve your tennis game with professional coaching. Learn technique, strategy, and sportsmanship!",
+  "image": "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=500&q=80",
+  "features": [
+    "Professional coaching",
+    "Match strategy",
+    "Fitness conditioning",
+    "Tournament preparation"
+  ],
+  "featured": false,
+  "available": true,
+  "createdAt": {
+    "$date": "2025-11-30T20:35:44.099Z"
+  },
+  "updatedAt": {
+    "$date": "2025-12-07T17:03:08.785Z"
+  },
+  "__v": 0
+}]

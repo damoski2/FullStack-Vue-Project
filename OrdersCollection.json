@@ -1,0 +1,62 @@
+[{
+  "_id": {
+    "$oid": "6935b34c3eca18a6239c40c8"
+  },
+  "user_id": {
+    "$oid": "692caaa0cbfaf3a4f494259c"
+  },
+  "lesson_id": {
+    "$oid": "692caaa0cbfaf3a4f4942597"
+  },
+  "student_name": "Oyindamola Akogun",
+  "student_age": 10,
+  "student_grade": "5",
+  "special_notes": "nothing",
+  "quantity": 3,
+  "total_amount": 156,
+  "status": "confirmed",
+  "payment_status": "paid",
+  "payment_method": "card",
+  "payment_id": "74dd7d5c-ab82-406e-adb1-0f1aacb3453f",
+  "enrolled_at": {
+    "$date": "2025-12-07T17:03:08.629Z"
+  },
+  "createdAt": {
+    "$date": "2025-12-07T17:03:08.633Z"
+  },
+  "updatedAt": {
+    "$date": "2025-12-07T17:03:09.077Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6935b3d03eca18a6239c4183"
+  },
+  "user_id": {
+    "$oid": "692caaa0cbfaf3a4f494259c"
+  },
+  "lesson_id": {
+    "$oid": "692caa9fcbfaf3a4f4942589"
+  },
+  "student_name": "Oyindamola Akogun",
+  "student_age": 5,
+  "student_grade": "5",
+  "special_notes": "",
+  "quantity": 7,
+  "total_amount": 308,
+  "status": "confirmed",
+  "payment_status": "paid",
+  "payment_method": "card",
+  "payment_id": "1aed7e7b-789e-4980-b2e2-2cb6b88bd58f",
+  "enrolled_at": {
+    "$date": "2025-12-07T17:05:20.169Z"
+  },
+  "createdAt": {
+    "$date": "2025-12-07T17:05:20.169Z"
+  },
+  "updatedAt": {
+    "$date": "2025-12-07T17:05:20.594Z"
+  },
+  "__v": 0
+}]
