@@ -79,7 +79,7 @@ sem1-project/
 │   │   ├── Category.js
 │   │   ├── Teacher.js
 │   │   ├── CartItem.js
-│   │   ├── Enrollment.js
+│   │   ├── Order.js
 │   │   └── Review.js
 │   ├── routes/                  # API routes
 │   │   ├── auth.js              # Authentication routes
@@ -107,7 +107,7 @@ The following collections are exported from MongoDB Atlas and included in the su
 Contains all lesson/class data including:
 - Lesson details (title, description, price, duration, schedule)
 - Category and teacher references
-- Enrollment information (students_enrolled, max_students)
+- Order/Enrollment information (students_enrolled, max_students)
 - Availability status
 - Ratings and reviews count
 - Images and features
@@ -193,7 +193,7 @@ A complete Postman collection is included in the submission with all API endpoin
 - DELETE Clear Cart
 - GET Cart Count
 
-#### Enrollments
+#### Enrollments/Order
 - POST Checkout/Process Enrollment
 - GET User Enrollments
 - GET Enrollment by ID
@@ -389,9 +389,9 @@ The application uses JWT (JSON Web Tokens) for authentication. Users can registe
 
 ## 🔗 Important Links Summary
 
-- **Vue.js GitHub Repository**: [Your Vue.js App GitHub Repository URL]
-- **Vue.js GitHub Pages**: [Your Vue.js App GitHub Pages URL]
-- **Express.js GitHub Repository**: [Your Express.js App GitHub Repository URL]
+- **Vue.js GitHub Repository**: https://github.com/damoski2/FullStack-Vue-Project/tree/main/frontend
+- **Vue.js GitHub Pages**: https://afterschool-hub-frontend.onrender.com/
+- **Express.js GitHub Repository**: https://github.com/damoski2/FullStack-Vue-Project/tree/main/backend
 - **Express.js API (Render.com)**: https://fullstack-vue-project-10x2.onrender.com/api
 - **Lessons Endpoint**: https://fullstack-vue-project-10x2.onrender.com/api/lessons
 
@@ -403,6 +403,6 @@ This project is licensed under the MIT License.
 
 **AfterSchool Hub** - Empowering after-school education with modern technology! 🎓✨
 
-**Submission Date**: [Date]
-**Student Name**: [Your Name]
-**Course**: [Course Name]
+**Submission Date**: 7-12-2025
+**Student Name**: Oyindamola Akogun
+**Course**: Information technology
